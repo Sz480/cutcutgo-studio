@@ -134,6 +134,7 @@ sudo make install   # OR: make install-local  # latter installs only for this us
 
 <details>
 <summary>Click to get steps</summary>
+
 The following software/library versions were used:
 * Windows 11
 * Inkscape 1.4.3
