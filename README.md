@@ -134,43 +134,60 @@ sudo make install   # OR: make install-local  # latter installs only for this us
 
 <details>
 <summary>Click to get steps</summary>
+The following software/library versions were used:
+* Windows 11
+* Inkscape 1.4.3
+* Cutcutgo Build 89e87e3
+* zadig 2.9
+* Python 3.12.9
+* pip 25.3
+* numpy 2.4.0
+* pyusb 1.3.1
+* lxml 6.0.2
+* xmltodict 1.0.2
+* cssselect 1.3.0
+* tinycss2 1.5.1
+* matplotlib 3.10.8
+* pyserial 3.5
+* pip 25.3
 
-#### Driver 
+Set up a venv:
+* Generate the venv: `python -m venv %USERPROFILE%\cutcutgo-venv`
+* Activate the venv: `%USERPROFILE%\cutcutgo-venv\Scripts\activate`
+* Install the libraries for the requirements.txt + pyserial.
 
-These steps must be done with Silhouette device plugged in to USB port.
+Set the Python interpreter for Inkscape:
+* Open Inkscape.
+* Go to Edit -> Preferences -> System -> User preferences and copy the path (default: `%USERPROFILE%\AppData\Roaming\inkscape\preferences.xml`)
+* Open the `preferences.xml` and search for `id="extensions"`.
+* Add as attribut to this block `python-interpreter="C:\Users\...\cutcutgo-venv\Scripts\python.exe"`. Like
+  ```
+  <group
+   id="extensions"
+   python-interpreter="C:\Users\...\cutcutgo-venv\Scripts\python.exe"
+   org.inkscape.output.png.inkscape.png_bitdepth="99"
+   org.inkscape.output.png.inkscape.png_compression="6"
+   org.inkscape.output.png.inkscape.png_antialias="2" />
+  ```
+* Save the file.
 
-* Download newest Zadig from http://zadig.akeo.ie/
-* Go to menu options `List all devices`
-* Look for USB Printing Support in the dropdown list
-* Ensure USB ID is: `0B4D` (Graftek America)
-* Select driver `libusb-win32 (v1.2.6.0)` which will install a `libusb0`-Port for Windows
-* Click replace driver
-
-To later undo:
-
-* Run Zadig again
-* Go to menu options `List all devices`
-* Look for USB Printing Support in the dropdown list
-* Ensure USB ID is: `0B4D` (Graftek America)
-* Select driver `WinUsb` which will undo the prior change.
-* Click replace driver
-
-#### Python adapter
-
-* Inkscape usually comes with a Version of Python; ensure that feature under `Program Files/Python` is ticked upon installation or change/add features accordingly
-* Install pip (a package manager for python):
-  * Download `get-pip.py` from https://bootstrap.pypa.io/get-pip.py and copy to the `bin` directory, e.g. `C:\Program Files\Inkscape\bin`
-  * Open command line and navigate to the same directory, then enter `.\python.exe '.\get-pip.py'`
-* Install pyusb:
-  * Still in command line enter `.\python.exe -m pip install pyusb`
-
-#### CutcutGo inkscape extension itself
-
+Check the driver:
+* Please plug in your Cricut Maker 1 via USB to your desktop or notebook.
+* Go to the Device Manager and check if there is a connection to a serial USB device at a specific COM port.
+* Test if the ports are seen by the python libraries: `%USERPROFILE%\cutcutgo-venv\Scripts\python.exe -c "import serial.tools.list_ports as lp; print([ (p.device,p.vid,p.pid,p.description) for p in lp.comports() ])"`
+* The output should be like that: `[('COM5', 1240, 10, 'Serielles USB-Gerät (COM5)')]`
+  * You can double-check for the right device by downloading and executing Zadig from http://zadig.akeo.ie/.
+    * Go to `Options` and select `List All Devices`.
+    * Select `Simple CDC Device Demo`.
+    * The `USB ID` (e.g., [hex] 04D8 000A) must be the same as the output of the Python test script.
+      * Output message must be converted to hex: `[...] 1240 = 0x04D8, 10 = 0x000A [...]`
+     
+Add extension to Inkscape:
 * Download https://github.com/virtualabs/inkscape-cutcutgo/archive/main.zip
 * Open the downloaded file and select the following three items: `cutcutgo`, `sendto_cricut.inx`, `sendto_cricut.py`
 * Extract them to your `share\inkscape\extensions` directory, e.g. `C:\Program Files\Inkscape\share\inkscape\extensions`
-* Restart inkscape
 
+Afterwards you can start Inkscape.
 </details>
 
 ---
