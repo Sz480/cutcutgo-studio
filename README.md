@@ -1,4 +1,18 @@
-# inkscape-cutcutgo
+# inkscape-cutcutgo-sz
+
+Fork of inkscape-cutcutgo for bring the development forward with vibe coding.
+
+My setup:
+* Cricut
+  * Version: Maker-C98E (1. Generation)
+  * PCB: ATH-84-112-X3
+  * Firmware: CutcutGo 1.0
+* Notebook
+  * OS: Windows 11
+  * Python: 3.11.9
+  * Software: Inkscape 1.4.3
+
+---
 
 An extension to drive a Cricut Maker running the CutcutGo firmware from within inkscape,
 largely derived from [inkscape-silhouette](https://github.com/fablabnbg/inkscape-silhouette)
@@ -136,8 +150,6 @@ sudo make install   # OR: make install-local  # latter installs only for this us
 <summary>Click to get steps</summary>
 
 The following software/library versions were used:
-* Windows 11
-* Inkscape 1.4.3
 * Cutcutgo Build 89e87e3
 * zadig 2.9
 * Python 3.12.9
