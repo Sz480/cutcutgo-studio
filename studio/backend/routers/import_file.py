@@ -26,7 +26,7 @@ async def trace_image(
 
     try:
         trace_params = TraceParams.model_validate(json.loads(params))
-    except Exception as e:
+    except (json.JSONDecodeError, ValueError) as e:
         raise HTTPException(status_code=422, detail=f"Invalid params: {e}")
 
     try:
