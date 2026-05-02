@@ -19,8 +19,11 @@ export default defineConfig({
       }
     }
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   renderer: {
+    root: 'src/renderer',
     plugins: [react()],
+    // @ts-ignore – vitest 'test' config is valid at runtime but not in electron-vite's types
     test: {
       environment: 'jsdom',
       globals: true,
