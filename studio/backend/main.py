@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from studio.backend.routers import device, media, job
+from studio.backend.routers import device, media, job, import_file
 
 APP_VERSION = "1.0.0"
 
@@ -36,6 +36,7 @@ app.add_middleware(
 app.include_router(device.router, prefix="/api/device", tags=["device"])
 app.include_router(media.router, prefix="/api/media", tags=["media"])
 app.include_router(job.router, prefix="/api/job", tags=["job"])
+app.include_router(import_file.router, prefix="/api/import", tags=["import"])
 
 
 @app.get("/api/health")
