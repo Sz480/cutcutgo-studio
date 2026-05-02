@@ -7,7 +7,11 @@ const PX_PER_MM = 96 / 25.4  // ≈ 3.7795
  * Parse an SVG string and return all visible strokes as mm-coordinate polylines.
  * Works in both Electron renderer (real DOM) and jsdom (tests).
  */
-export function parseSvgToMmPaths(svgString: string, smoothness = 0.05): PathList {
+export function parseSvgToMmPaths(
+  svgString: string,
+  smoothness = 0.05,
+  onWarning?: (msg: string) => void,
+): PathList {
   const parser = new DOMParser()
   const doc = parser.parseFromString(svgString, 'image/svg+xml')
   const svgEl = doc.documentElement as unknown as SVGSVGElement
@@ -26,6 +30,35 @@ export function parseSvgToMmPaths(svgString: string, smoothness = 0.05): PathLis
     if (points.length >= 2) {
       result.push(points)
     }
+  })
+
+  // Warn on <text> elements
+  const textEls = doc.querySelectorAll('text')
+  if (textEls.length > 0 && onWarning) {
+    onWarning(`Text-Elemente werden nicht unterstützt — bitte in Inkscape zu Pfaden konvertieren (Pfad → Objekt in Pfad umwandeln).`)
+  }
+
+  // Resolve <use> elements
+  const useEls = doc.querySelectorAll('use')
+  useEls.forEach((useEl) => {
+    const href = (
+      useEl.getAttribute('href') ||
+      useEl.getAttribute('xlink:href') ||
+      ''
+    ).trim()
+    if (!href.startsWith('#')) return
+    const refEl = doc.getElementById(href.slice(1))
+    if (!refEl) return
+
+    const cloned = refEl.cloneNode(true) as SVGElement
+    const ux = parseFloat(useEl.getAttribute('x') || '0')
+    const uy = parseFloat(useEl.getAttribute('y') || '0')
+
+    const pathData = elementToPathData(cloned)
+    if (!pathData) return
+    // offsetX - ux so that (x + ux - offsetX) * mmPerUnit gives correct mm position
+    const points = samplePathData(pathData, mmPerUnit, offsetX - ux, offsetY - uy, smoothness)
+    if (points.length >= 2) result.push(points)
   })
 
   return result

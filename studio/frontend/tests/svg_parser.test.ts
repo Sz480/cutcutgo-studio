@@ -106,3 +106,37 @@ describe('parseSvgToMmPaths', () => {
     expect(last[1]).toBeCloseTo(10, 1)
   })
 })
+
+describe('parseSvgToMmPaths — <use> support', () => {
+  it('resolves <use href="#id"> and returns paths from the referenced element', () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100mm" viewBox="0 0 100 100">
+      <defs>
+        <rect id="box" x="10" y="10" width="20" height="20"/>
+      </defs>
+      <use href="#box"/>
+    </svg>`
+    const paths = parseSvgToMmPaths(svg)
+    expect(paths.length).toBeGreaterThan(0)
+  })
+
+  it('resolves <use xlink:href="#id"> (legacy)', () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100mm" viewBox="0 0 100 100">
+      <defs>
+        <circle id="dot" cx="50" cy="50" r="10"/>
+      </defs>
+      <use xlink:href="#dot"/>
+    </svg>`
+    const paths = parseSvgToMmPaths(svg)
+    expect(paths.length).toBeGreaterThan(0)
+  })
+
+  it('calls onWarning when <text> is present', () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100mm" viewBox="0 0 100 100">
+      <text x="10" y="20">Hello</text>
+    </svg>`
+    const warnings: string[] = []
+    parseSvgToMmPaths(svg, 0.05, (msg) => warnings.push(msg))
+    expect(warnings.length).toBeGreaterThan(0)
+    expect(warnings[0].toLowerCase()).toContain('text')
+  })
+})
