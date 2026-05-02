@@ -1,6 +1,6 @@
 from __future__ import annotations
 import threading
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Query
+from fastapi import APIRouter, HTTPException, Query
 
 from studio.backend.models import CutJob, JobResponse
 from studio.backend.device_service import get_device_service
@@ -15,6 +15,10 @@ def _run_cut_job(job: CutJob, dry_run: bool) -> dict:
     _cancel_event.clear()
     optimized = optimize_paths(job.paths, job.settings)
     path_tuples = [[(pt[0], pt[1]) for pt in path] for path in optimized]
+
+    # Check cancellation before touching the device
+    if _cancel_event.is_set():
+        raise RuntimeError("Job cancelled before device communication started")
 
     s = job.settings
     svc = get_device_service()
@@ -61,7 +65,6 @@ def job_preview(job: CutJob) -> JobResponse:
 @router.post("/send", response_model=JobResponse)
 def job_send(
     job: CutJob,
-    background_tasks: BackgroundTasks,
     dry_run: bool = Query(default=False),
 ) -> JobResponse:
     svc = get_device_service()
