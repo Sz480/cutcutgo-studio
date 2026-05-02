@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import type { TraceParams, TraceResult } from '../types'
 
 interface Props {
@@ -15,14 +15,20 @@ interface Props {
 export function ImportPanel({
   file, params, onParamsChange, result, loading, error, onAccept, onCancel,
 }: Props) {
-  const imageUrl = useMemo(() => URL.createObjectURL(file), [file])
+  const [imageUrl, setImageUrl] = useState('')
+  useEffect(() => {
+    const url = URL.createObjectURL(file)
+    setImageUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
+
   const [enabledColors, setEnabledColors] = useState<Set<string>>(new Set())
 
-  useMemo(() => {
+  useEffect(() => {
     if (result?.layers) {
       setEnabledColors(new Set(result.layers.map(l => l.color)))
     }
-  }, [result?.layers?.length])
+  }, [result?.layers])
 
   const toggleColor = (color: string) => {
     setEnabledColors(prev => {
@@ -32,6 +38,7 @@ export function ImportPanel({
     })
   }
 
+  // result.paths is the flat union of all layer paths in both silhouette and color modes
   const bbox = useMemo(() => {
     if (!result || result.paths.length === 0) return { maxX: 1, maxY: 1 }
     let maxX = 0, maxY = 0

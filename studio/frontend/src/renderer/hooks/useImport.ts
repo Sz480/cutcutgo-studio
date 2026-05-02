@@ -10,8 +10,6 @@ export function useImport() {
   const [traceLoading, setTraceLoading] = useState(false)
   const [traceError, setTraceError] = useState<string | null>(null)
 
-  const paramsKey = JSON.stringify(params)
-
   useEffect(() => {
     if (!file) return
     const timer = setTimeout(async () => {
@@ -27,7 +25,7 @@ export function useImport() {
       }
     }, 300)
     return () => clearTimeout(timer)
-  }, [file, paramsKey])
+  }, [file, params.mode, params.threshold, params.num_colors, params.smoothness, params.media_width_mm])
 
   const accept = useCallback(
     (enabledColors?: Set<string>): PathList | null => {

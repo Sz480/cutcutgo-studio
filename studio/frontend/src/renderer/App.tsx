@@ -51,7 +51,7 @@ export default function App() {
       }
     }
     input.click()
-  }, [reset, importHook, settings.media_width_mm])
+  }, [reset, importHook.setFile, importHook.setParams, importHook.params, settings.media_width_mm])
 
   const handleImportAccept = useCallback((enabledColors?: Set<string>) => {
     const paths = importHook.accept(enabledColors)
@@ -62,12 +62,12 @@ export default function App() {
     }
     setShowImportPanel(false)
     importHook.reset()
-  }, [importHook, reset])
+  }, [importHook.accept, importHook.reset, reset])
 
   const handleImportCancel = useCallback(() => {
     setShowImportPanel(false)
     importHook.reset()
-  }, [importHook])
+  }, [importHook.reset])
 
   const handlePreview = useCallback(() => {
     if (!parsedPaths) return
