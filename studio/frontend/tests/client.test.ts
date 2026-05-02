@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import axios from 'axios'
 import { api } from '../src/renderer/api/client'
+import type { TraceParams } from '../src/renderer/types'
 
 vi.mock('axios')
 const mockedAxios = vi.mocked(axios, true)
@@ -45,5 +46,26 @@ describe('api.sendJob', () => {
       'http://127.0.0.1:8765/api/job/send?dry_run=false',
       expect.any(Object)
     )
+  })
+})
+
+describe('api.traceImage', () => {
+  beforeEach(() => vi.resetAllMocks())
+
+  it('posts multipart/form-data to /api/import/trace', async () => {
+    mockedAxios.post = vi.fn().mockResolvedValue({
+      data: { paths: [[[0, 0], [10, 10]]], layers: [] }
+    })
+    const file = new File([new Uint8Array([137, 80, 78, 71])], 'test.png', { type: 'image/png' })
+    const params: TraceParams = {
+      mode: 'silhouette', threshold: 128, num_colors: 4, smoothness: 1.0, media_width_mm: 304.8
+    }
+    const result = await api.traceImage(file, params)
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      'http://127.0.0.1:8765/api/import/trace',
+      expect.any(FormData),
+      expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'multipart/form-data' }) })
+    )
+    expect(result.paths).toHaveLength(1)
   })
 })

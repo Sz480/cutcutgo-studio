@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type {
-  CutJob, DeviceStatus, JobResponse, MediaPreset
+  CutJob, DeviceStatus, JobResponse, MediaPreset, TraceParams, TraceResult
 } from '../types'
 
 const BASE = 'http://127.0.0.1:8765'
@@ -42,5 +42,15 @@ export const api = {
 
   async cancelJob(): Promise<void> {
     await axios.post(`${BASE}/api/job/cancel`)
+  },
+
+  async traceImage(file: File, params: TraceParams): Promise<TraceResult> {
+    const form = new FormData()
+    form.append('file', file)
+    form.append('params', JSON.stringify(params))
+    const res = await axios.post(`${BASE}/api/import/trace`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return res.data
   },
 }
