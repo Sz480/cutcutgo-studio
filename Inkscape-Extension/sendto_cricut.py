@@ -14,6 +14,7 @@ import numpy as np
 
 # we sys.path.append() the directory where this script lives.
 sys.path.append(os.path.dirname(os.path.abspath(sys.argv[0])))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), '..'))
 
 sys_platform = sys.platform.lower()
 if sys_platform.startswith("win"):

@@ -3,7 +3,7 @@
 PREFIX?=/usr
 DISTNAME=inkscape-cutcutgo
 EXCL=--exclude \*.orig --exclude \*.pyc
-ALL=README.md *.png *.sh *.rules *.py *.inx examples misc cutcutgo locale
+ALL=../README.md *.png *.sh *.rules *.py *.inx ../examples misc ../cutcutgo locale
 VERS=$$(python3 ./sendto_cricut.py --version)
 
 ## echo python3 ./sendto_silhouette.py
@@ -44,7 +44,7 @@ dist: mo # Genearate OS specific packagings and install files (Windows, Linux Di
 install: mo # Install is used by dist or use this with this command `sudo make install` to install for all users
 	mkdir -p $(DEST)
 	@# CAUTION: cp -a does not work under fakeroot. Use cp -r instead.
-	cp -r cutcutgo $(DEST)
+	cp -r ../cutcutgo $(DEST)
 	install -m 755 sendto_cricut.py $(DEST)
 	install -m 644 *.inx $(DEST)
 	cp -r locale $(LOCALE)
@@ -53,7 +53,7 @@ install: mo # Install is used by dist or use this with this command `sudo make i
 install-local: mo # Use this with `make install-local` to install just in your user account
 	mkdir -p $(DESTLOCAL)
 	@# CAUTION: cp -a does not work under fakeroot. Use cp -r instead.
-	cp -r cutcutgo $(DESTLOCAL)
+	cp -r ../cutcutgo $(DESTLOCAL)
 	install -m 755 sendto_cricut.py $(DESTLOCAL)
 	install -m 644 *.inx $(DESTLOCAL)
 	cp -r locale $(DESTLOCAL)

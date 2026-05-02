@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 from os import path
 import re
+import sys
 #import glob
 
 from distutils.core import setup
+sys.path.insert(0, '..')
 from sendto_cricut import __author__, __version__
 
 # read the contents of your README file
 this_directory = path.abspath(path.dirname(__file__))
-with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+with open(path.join(this_directory, '..', 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 m = re.match(r'(.*)\s+<(.*)>', __author__)
@@ -30,6 +32,7 @@ setup(name='inkscape-cutcutgo',
       #               glob.glob('misc/*/*')),
 
       packages=['cutcutgo'],
+      package_dir={'cutcutgo': '../cutcutgo'},
       license='GPL-2.0',
       classifiers=[
           'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
