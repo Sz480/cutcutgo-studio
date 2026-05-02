@@ -66,3 +66,31 @@ export interface MediaPreset {
   default_pressure: number
   default_clearance: number
 }
+
+export type TraceMode = 'silhouette' | 'color'
+
+export interface TraceParams {
+  mode: TraceMode
+  threshold: number       // 0–255, silhouette mode
+  num_colors: number      // 2–8, color mode
+  smoothness: number      // 0.0–10.0
+  media_width_mm: number  // fit image to this width
+}
+
+export interface ColorLayer {
+  color: string   // CSS hex e.g. "#ff0000"
+  paths: PathList
+}
+
+export interface TraceResult {
+  paths:  PathList
+  layers: ColorLayer[]
+}
+
+export const DEFAULT_TRACE_PARAMS: TraceParams = {
+  mode: 'silhouette',
+  threshold: 128,
+  num_colors: 4,
+  smoothness: 1.0,
+  media_width_mm: 304.8,
+}
