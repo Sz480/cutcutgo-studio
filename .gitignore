@@ -5,6 +5,9 @@
 .venv/
 .vscode/
 
+# Worktrees
+.worktrees/
+
 # Test artifact locally
 silhouette.log
 testcut_square_triangle_o.cmd
