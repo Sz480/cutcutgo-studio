@@ -1,4 +1,5 @@
 from __future__ import annotations
+from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field
 
@@ -6,6 +7,29 @@ from pydantic import BaseModel, Field
 Point = list[float]   # [x_mm, y_mm]
 Path = list[Point]    # ordered sequence of points forming one stroke
 PathList = list[Path] # collection of strokes
+
+
+class TraceMode(str, Enum):
+    silhouette = "silhouette"
+    color      = "color"
+
+
+class TraceParams(BaseModel):
+    mode:           TraceMode = TraceMode.silhouette
+    threshold:      int   = Field(default=128, ge=0, le=255)
+    num_colors:     int   = Field(default=4, ge=2, le=8)
+    smoothness:     float = Field(default=1.0, ge=0.0, le=10.0)
+    media_width_mm: float = Field(default=304.8, gt=0)
+
+
+class ColorLayer(BaseModel):
+    color: str
+    paths: PathList
+
+
+class TraceResult(BaseModel):
+    paths:  PathList
+    layers: list[ColorLayer] = []
 
 
 class CutSettings(BaseModel):
