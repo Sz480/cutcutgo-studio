@@ -11,6 +11,12 @@
 # Frontend dependencies
 studio/frontend/node_modules/
 
+# Frontend build output
+studio/frontend/out/
+studio/frontend/src/renderer/out_test/
+studio/frontend/src/renderer/out_verify/
+studio/frontend/*.tsbuildinfo
+
 # Test artifact locally
 silhouette.log
 testcut_square_triangle_o.cmd
