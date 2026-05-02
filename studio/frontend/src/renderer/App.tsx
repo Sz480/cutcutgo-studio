@@ -5,19 +5,24 @@ import { api } from './api/client'
 import { parseSvgToMmPaths } from './svg/parser'
 import { useDevice } from './hooks/useDevice'
 import { useJob } from './hooks/useJob'
+import { useImport } from './hooks/useImport'
 import { Toolbar } from './components/Toolbar'
 import { Canvas } from './components/Canvas'
 import { SettingsPanel } from './components/SettingsPanel'
 import { DeviceStatus } from './components/DeviceStatus'
+import { ImportPanel } from './components/ImportPanel'
 
 export default function App() {
   const [settings, setSettings] = useState<CutSettings>(DEFAULT_SETTINGS)
   const [mediaPresets, setMediaPresets] = useState<MediaPreset[]>([])
   const [svgContent, setSvgContent] = useState<string | null>(null)
   const [parsedPaths, setParsedPaths] = useState<PathList | null>(null)
+  const [svgWarning, setSvgWarning] = useState<string | null>(null)
+  const [showImportPanel, setShowImportPanel] = useState(false)
 
   const { status: deviceStatus, loading: deviceLoading, error: deviceError, connect, disconnect } = useDevice()
   const { state: jobState, previewPaths, error: jobError, preview, send, cancel, reset } = useJob()
+  const importHook = useImport()
 
   useEffect(() => {
     api.listMedia().then(setMediaPresets).catch(() => {})
@@ -26,18 +31,43 @@ export default function App() {
   const handleOpenFile = useCallback(() => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = '.svg'
+    input.accept = '.svg,.png,.jpg,.jpeg'
     input.onchange = async () => {
       const file = input.files?.[0]
       if (!file) return
-      const text = await file.text()
-      setSvgContent(text)
-      const paths = parseSvgToMmPaths(text)
-      setParsedPaths(paths)
-      reset()
+      const ext = file.name.split('.').pop()?.toLowerCase()
+
+      if (ext === 'svg') {
+        const text = await file.text()
+        setSvgContent(text)
+        setSvgWarning(null)
+        const paths = parseSvgToMmPaths(text, 0.05, (msg) => setSvgWarning(msg))
+        setParsedPaths(paths)
+        reset()
+      } else if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
+        importHook.setFile(file)
+        importHook.setParams({ ...importHook.params, media_width_mm: settings.media_width_mm })
+        setShowImportPanel(true)
+      }
     }
     input.click()
-  }, [reset])
+  }, [reset, importHook, settings.media_width_mm])
+
+  const handleImportAccept = useCallback((enabledColors?: Set<string>) => {
+    const paths = importHook.accept(enabledColors)
+    if (paths) {
+      setParsedPaths(paths)
+      setSvgContent(null)
+      reset()
+    }
+    setShowImportPanel(false)
+    importHook.reset()
+  }, [importHook, reset])
+
+  const handleImportCancel = useCallback(() => {
+    setShowImportPanel(false)
+    importHook.reset()
+  }, [importHook])
 
   const handlePreview = useCallback(() => {
     if (!parsedPaths) return
@@ -60,6 +90,12 @@ export default function App() {
         hasDesign={parsedPaths !== null && parsedPaths.length > 0}
         deviceConnected={deviceStatus.connected}
       />
+
+      {svgWarning && (
+        <div className="px-4 py-1 bg-yellow-900/60 text-yellow-300 text-xs border-b border-yellow-700">
+          {svgWarning}
+        </div>
+      )}
 
       <div className="flex flex-1 overflow-hidden">
         <Canvas
@@ -87,6 +123,19 @@ export default function App() {
           />
         </div>
       </div>
+
+      {showImportPanel && importHook.file && (
+        <ImportPanel
+          file={importHook.file}
+          params={importHook.params}
+          onParamsChange={importHook.setParams}
+          result={importHook.traceResult}
+          loading={importHook.traceLoading}
+          error={importHook.traceError}
+          onAccept={handleImportAccept}
+          onCancel={handleImportCancel}
+        />
+      )}
     </div>
   )
 }
