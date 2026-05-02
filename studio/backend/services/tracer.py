@@ -126,7 +126,6 @@ _RE_NUM = re.compile(r'-?[0-9]*\.?[0-9]+(?:[eE][+-]?[0-9]+)?')
 def _parse_commands(d: str) -> list:
     cmds = []
     lx = ly = 0.0
-    lcp2x = lcp2y = None
 
     for m in _RE_CMD.finditer(d):
         letter = m.group(1)
@@ -137,11 +136,13 @@ def _parse_commands(d: str) -> list:
         oy = ly if rel else 0.0
 
         if typ not in ('C', 'S'):
-            lcp2x = lcp2y = None
+            pass
 
         if typ == 'M':
             for i in range(0, len(nums), 2):
-                x, y = nums[i] + ox, nums[i+1] + oy
+                ox_i = lx if rel else 0.0
+                oy_i = ly if rel else 0.0
+                x, y = nums[i] + ox_i, nums[i+1] + oy_i
                 cmds.append({'type': 'M' if i == 0 else 'L', 'x': x, 'y': y})
                 lx, ly = x, y
         elif typ == 'L':
@@ -155,14 +156,12 @@ def _parse_commands(d: str) -> list:
                 x2, y2 = nums[i+2]+ox, nums[i+3]+oy
                 x, y   = nums[i+4]+ox, nums[i+5]+oy
                 cmds.append({'type': 'C', 'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2, 'x': x, 'y': y})
-                lcp2x, lcp2y = x2, y2
                 lx, ly = x, y
         elif typ == 'S':
             for i in range(0, len(nums), 4):
                 x2, y2 = nums[i]+ox, nums[i+1]+oy
                 x, y   = nums[i+2]+ox, nums[i+3]+oy
                 cmds.append({'type': 'S', 'x2': x2, 'y2': y2, 'x': x, 'y': y})
-                lcp2x, lcp2y = x2, y2
                 lx, ly = x, y
         elif typ == 'Z':
             cmds.append({'type': 'Z'})
@@ -170,7 +169,9 @@ def _parse_commands(d: str) -> list:
     return cmds
 
 
-def _subdivide(x0, y0, x1, y1, x2, y2, x3, y3, eps):
+def _subdivide(x0, y0, x1, y1, x2, y2, x3, y3, eps, depth=0):
+    if depth >= 32:
+        return [(x3, y3)]
     dx, dy = x3 - x0, y3 - y0
     d1 = abs((x1 - x3) * dy - (y1 - y3) * dx)
     d2 = abs((x2 - x3) * dy - (y2 - y3) * dx)
@@ -183,6 +184,6 @@ def _subdivide(x0, y0, x1, y1, x2, y2, x3, y3, eps):
     mx123, my123 = (mx12+mx23)/2, (my12+my23)/2
     mx,  my  = (mx012+mx123)/2, (my012+my123)/2
     return (
-        _subdivide(x0, y0, mx01, my01, mx012, my012, mx, my, eps) +
-        _subdivide(mx, my, mx123, my123, mx23, my23, x3, y3, eps)
+        _subdivide(x0, y0, mx01, my01, mx012, my012, mx, my, eps, depth+1) +
+        _subdivide(mx, my, mx123, my123, mx23, my23, x3, y3, eps, depth+1)
     )
