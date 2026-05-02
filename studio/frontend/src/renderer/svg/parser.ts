@@ -55,7 +55,13 @@ export function parseSvgToMmPaths(
     const uy = parseFloat(useEl.getAttribute('y') || '0')
 
     const pathData = elementToPathData(cloned)
-    if (!pathData) return
+    if (!pathData) {
+      const tag = cloned.tagName.toLowerCase()
+      if ((tag === 'g' || tag === 'use') && onWarning) {
+        onWarning(`<use> referenziert ein Gruppen-Element (<${tag}>) — nur einfache Formen werden unterstützt.`)
+      }
+      return
+    }
     // offsetX - ux so that (x + ux - offsetX) * mmPerUnit gives correct mm position
     const points = samplePathData(pathData, mmPerUnit, offsetX - ux, offsetY - uy, smoothness)
     if (points.length >= 2) result.push(points)
