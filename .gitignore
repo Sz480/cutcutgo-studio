@@ -8,6 +8,9 @@
 # Worktrees
 .worktrees/
 
+# Frontend dependencies
+studio/frontend/node_modules/
+
 # Test artifact locally
 silhouette.log
 testcut_square_triangle_o.cmd
