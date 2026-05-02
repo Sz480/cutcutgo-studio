@@ -7,9 +7,8 @@ const STARTUP_TIMEOUT_MS = 15_000
 let proc: ChildProcess | null = null
 
 function repoRoot(): string {
-  // In dev: __dirname resolved by electron-vite to studio/frontend/src/main
-  // Navigate up to the repo root: studio/frontend/src/main → ../../../../
-  return join(__dirname, '..', '..', '..', '..', '..')
+  // Compiled output: studio/frontend/out/main → 4 levels up to repo root
+  return join(__dirname, '..', '..', '..', '..')
 }
 
 export async function startPythonBackend(): Promise<void> {
