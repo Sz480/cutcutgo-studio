@@ -115,3 +115,77 @@ def test_reset_position():
     svc.reset_position()
     assert svc._pos_x == 0.0
     assert svc._pos_y == 0.0
+
+
+# ── Endpoint tests ────────────────────────────────────────────────────────────
+
+def test_jog_not_connected():
+    with patch("studio.backend.routers.device.get_device_service") as mock_get:
+        svc = MagicMock()
+        svc.is_connected.return_value = False
+        mock_get.return_value = svc
+        response = client.post("/api/device/jog", json={"dx_mm": 1.0, "dy_mm": 0.0})
+    assert response.status_code == 409
+
+
+def test_jog_connected_calls_service():
+    with patch("studio.backend.routers.device.get_device_service") as mock_get:
+        svc = MagicMock()
+        svc.is_connected.return_value = True
+        svc.get_position.return_value = {"x_mm": 1.0, "y_mm": 0.0, "tool_state": "up"}
+        mock_get.return_value = svc
+        response = client.post("/api/device/jog", json={"dx_mm": 1.0, "dy_mm": 0.0})
+    assert response.status_code == 200
+    svc.jog.assert_called_once_with(1.0, 0.0)
+
+
+def test_home_not_connected():
+    with patch("studio.backend.routers.device.get_device_service") as mock_get:
+        svc = MagicMock()
+        svc.is_connected.return_value = False
+        mock_get.return_value = svc
+        response = client.post("/api/device/home")
+    assert response.status_code == 409
+
+
+def test_tool_invalid_action():
+    with patch("studio.backend.routers.device.get_device_service") as mock_get:
+        svc = MagicMock()
+        svc.is_connected.return_value = True
+        mock_get.return_value = svc
+        response = client.post("/api/device/tool", json={"action": "invalid"})
+    assert response.status_code == 422
+
+
+def test_tool_valid_action():
+    with patch("studio.backend.routers.device.get_device_service") as mock_get:
+        svc = MagicMock()
+        svc.is_connected.return_value = True
+        svc.get_position.return_value = {"x_mm": 0.0, "y_mm": 0.0, "tool_state": "pen"}
+        mock_get.return_value = svc
+        response = client.post("/api/device/tool", json={"action": "pen"})
+    assert response.status_code == 200
+    svc.set_tool.assert_called_once_with("pen")
+
+
+def test_get_position():
+    with patch("studio.backend.routers.device.get_device_service") as mock_get:
+        svc = MagicMock()
+        svc.get_position.return_value = {"x_mm": 5.0, "y_mm": 10.0, "tool_state": "pen"}
+        mock_get.return_value = svc
+        response = client.get("/api/device/position")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["x_mm"] == 5.0
+    assert data["y_mm"] == 10.0
+    assert data["tool_state"] == "pen"
+
+
+def test_reset_position_endpoint():
+    with patch("studio.backend.routers.device.get_device_service") as mock_get:
+        svc = MagicMock()
+        svc.get_position.return_value = {"x_mm": 0.0, "y_mm": 0.0, "tool_state": "up"}
+        mock_get.return_value = svc
+        response = client.post("/api/device/reset-position")
+    assert response.status_code == 200
+    svc.reset_position.assert_called_once()
