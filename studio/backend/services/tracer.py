@@ -13,7 +13,13 @@ _MAX_DIM = 2000  # max pixel dimension before resize
 
 
 def trace(image_bytes: bytes, params: TraceParams) -> TraceResult:
-    img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+    img = Image.open(io.BytesIO(image_bytes))
+    if img.mode in ('RGBA', 'LA', 'PA') or (img.mode == 'P' and 'transparency' in img.info):
+        bg = Image.new('RGB', img.size, (255, 255, 255))
+        bg.paste(img.convert('RGBA'), mask=img.convert('RGBA').split()[3])
+        img = bg
+    else:
+        img = img.convert('RGB')
 
     # Resize to max _MAX_DIM on longest side
     w, h = img.size
@@ -43,10 +49,9 @@ def trace(image_bytes: bytes, params: TraceParams) -> TraceResult:
             mode='spline',
             hierarchical='stacked',
         )
+        all_paths, color_layers = _parse_svg(svg_str, scale_x, scale_y)
     except Exception:
         return TraceResult(paths=[], layers=[])
-
-    all_paths, color_layers = _parse_svg(svg_str, scale_x, scale_y)
 
     return TraceResult(
         paths=all_paths,
@@ -134,9 +139,6 @@ def _parse_commands(d: str) -> list:
         nums = [float(n) for n in _RE_NUM.findall(m.group(2))]
         ox = lx if rel else 0.0
         oy = ly if rel else 0.0
-
-        if typ not in ('C', 'S'):
-            pass
 
         if typ == 'M':
             for i in range(0, len(nums), 2):

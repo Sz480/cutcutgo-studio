@@ -2,6 +2,7 @@ from __future__ import annotations
 import json
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from PIL import UnidentifiedImageError
 
 from studio.backend.models import TraceParams, TraceResult
 from studio.backend.services.tracer import trace
@@ -31,5 +32,7 @@ async def trace_image(
 
     try:
         return trace(image_bytes, trace_params)
+    except UnidentifiedImageError:
+        raise HTTPException(status_code=422, detail="File is not a valid image")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Tracing failed: {e}")

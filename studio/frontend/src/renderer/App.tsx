@@ -51,11 +51,11 @@ export default function App() {
       }
     }
     input.click()
-  }, [reset, importHook.setFile, importHook.setParams, importHook.params, settings.media_width_mm])
+  }, [reset, importHook.setFile, importHook.setParams, importHook.params.media_width_mm, settings.media_width_mm])
 
   const handleImportAccept = useCallback((enabledColors?: Set<string>) => {
     const paths = importHook.accept(enabledColors)
-    if (paths) {
+    if (paths && paths.length > 0) {
       setParsedPaths(paths)
       setSvgContent(null)
       reset()
