@@ -1,6 +1,8 @@
+import threading
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 from studio.backend.main import app
+from studio.backend.device_service import DeviceService
 
 client = TestClient(app)
 
@@ -42,3 +44,74 @@ def test_device_connect_not_found():
         mock_get.return_value = svc
         response = client.post("/api/device/connect")
     assert response.status_code == 404
+
+
+# ── DeviceService unit tests ──────────────────────────────────────────────────
+
+def _make_svc(pos_x=0.0, pos_y=0.0, tool_state="up"):
+    """Build a DeviceService with a mock device, bypassing __init__."""
+    svc = DeviceService.__new__(DeviceService)
+    svc._lock = threading.Lock()
+    svc._pos_x = pos_x
+    svc._pos_y = pos_y
+    svc._tool_state = tool_state
+    mock_dev = MagicMock()
+    mock_dev.pressure = 8.5
+    mock_dev.clearance = 1.0
+    mock_dev.tool_up = True
+    mock_dev.move_mm_cmd.return_value = [b"G01X0F10"]
+    mock_dev.send_receive_command.return_value = None
+    svc._device = mock_dev
+    return svc
+
+
+def test_jog_updates_position():
+    svc = _make_svc(pos_x=5.0, pos_y=3.0)
+    svc.jog(2.0, -1.0)
+    assert svc._pos_x == 7.0
+    assert svc._pos_y == 2.0
+    svc._device.move_mm_cmd.assert_called_once_with(2.0, 7.0)
+
+
+def test_jog_clamps_to_zero():
+    svc = _make_svc(pos_x=2.0, pos_y=3.0)
+    svc.jog(-10.0, -10.0)
+    assert svc._pos_x == 0.0
+    assert svc._pos_y == 0.0
+    svc._device.move_mm_cmd.assert_called_once_with(0.0, 0.0)
+
+
+def test_jog_sets_tool_state_up():
+    svc = _make_svc(tool_state="pen")
+    svc.jog(1.0, 0.0)
+    assert svc._tool_state == "up"
+
+
+def test_home_resets_position():
+    svc = _make_svc(pos_x=10.0, pos_y=20.0, tool_state="blade")
+    svc.home()
+    assert svc._pos_x == 0.0
+    assert svc._pos_y == 0.0
+    assert svc._tool_state == "up"
+    assert svc._device.tool_up is True
+
+
+def test_set_tool_up():
+    svc = _make_svc(tool_state="pen")
+    svc.set_tool("up")
+    assert svc._tool_state == "up"
+    assert svc._device.tool_up is True
+
+
+def test_set_tool_pen():
+    svc = _make_svc()
+    svc.set_tool("pen")
+    assert svc._tool_state == "pen"
+    assert svc._device.tool_up is False
+
+
+def test_reset_position():
+    svc = _make_svc(pos_x=15.0, pos_y=25.0)
+    svc.reset_position()
+    assert svc._pos_x == 0.0
+    assert svc._pos_y == 0.0

@@ -25,6 +25,9 @@ class DeviceService:
         self._lock = threading.Lock()
         self._device: CricutMaker | None = None
         self.port: str | None = None
+        self._pos_x: float = 0.0
+        self._pos_y: float = 0.0
+        self._tool_state: str = "up"
 
     def connect(self) -> None:
         """Attempt to find and connect to the device. Raises RuntimeError if not found."""
@@ -45,7 +48,6 @@ class DeviceService:
         with self._lock:
             if self._device is not None:
                 try:
-                    # CricutMaker has no close(); close the underlying Serial device
                     dev = getattr(self._device, "dev", None)
                     if dev is not None:
                         dev.close()
@@ -53,6 +55,9 @@ class DeviceService:
                     pass
                 self._device = None
                 self.port = None
+            self._pos_x = 0.0
+            self._pos_y = 0.0
+            self._tool_state = "up"
 
     def is_connected(self) -> bool:
         return self._device is not None
@@ -72,6 +77,57 @@ class DeviceService:
             return self._device.get_version()
         except Exception:
             return None
+
+    def jog(self, dx_mm: float, dy_mm: float) -> None:
+        """Move by relative offset; clamps to non-negative positions. Always raises tool."""
+        with self._lock:
+            if self._device is None:
+                raise RuntimeError("Device not connected")
+            new_x = max(0.0, self._pos_x + dx_mm)
+            new_y = max(0.0, self._pos_y + dy_mm)
+            cmds = self._device.move_mm_cmd(new_y, new_x)   # note: (mmy, mmx) order
+            self._device.send_receive_command(cmds)
+            self._pos_x = new_x
+            self._pos_y = new_y
+            self._tool_state = "up"
+
+    def home(self) -> None:
+        """Raise tool, run homing cycle ($H), reset tracked position to (0, 0)."""
+        with self._lock:
+            if self._device is None:
+                raise RuntimeError("Device not connected")
+            d = self._device
+            d.send_receive_command([b"G01Z-%fF10" % (d.pressure - d.clearance)])
+            d.tool_up = True
+            d.send_receive_command([b"$H"])
+            self._pos_x = 0.0
+            self._pos_y = 0.0
+            self._tool_state = "up"
+
+    def set_tool(self, action: str) -> None:
+        """Lower or raise the tool. action: 'up' | 'pen' | 'blade'."""
+        with self._lock:
+            if self._device is None:
+                raise RuntimeError("Device not connected")
+            d = self._device
+            if action == "up":
+                d.send_receive_command([b"G01Z-%fF10" % (d.pressure - d.clearance)])
+                d.tool_up = True
+            elif action in ("pen", "blade"):
+                d.send_receive_command([b"G01Z-%fF10" % d.pressure])
+                d.tool_up = False
+            else:
+                raise ValueError(f"Unknown action: {action!r}")
+            self._tool_state = action
+
+    def reset_position(self) -> None:
+        """Reset tracked (x, y) to (0, 0) without moving the device."""
+        with self._lock:
+            self._pos_x = 0.0
+            self._pos_y = 0.0
+
+    def get_position(self) -> dict:
+        return {"x_mm": self._pos_x, "y_mm": self._pos_y, "tool_state": self._tool_state}
 
     def get_raw(self) -> CricutMaker | None:
         return self._device
