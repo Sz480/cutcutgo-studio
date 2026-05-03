@@ -94,3 +94,14 @@ export const DEFAULT_TRACE_PARAMS: TraceParams = {
   smoothness: 1.0,
   media_width_mm: 304.8,
 }
+
+export interface MatSize {
+  label: string
+  widthMm: number
+  heightMm: number
+}
+
+export const MAT_SIZES: MatSize[] = [
+  { label: '12" × 12"  (304,8 × 304,8 mm)', widthMm: 304.8, heightMm: 304.8 },
+  { label: '12" × 24"  (304,8 × 609,6 mm)', widthMm: 304.8, heightMm: 609.6 },
+]
