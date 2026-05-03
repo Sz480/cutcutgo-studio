@@ -40,7 +40,7 @@ export default function App() {
       if (ext === 'svg') {
         let text = await file.text()
         setSvgWarning(null)
-        let inkscapeHandledText = false
+        let appHandledTextWarning = false
 
         if (/<text[\s>]/i.test(text)) {
           const result = await window.electron.ipcRenderer.invoke(
@@ -48,11 +48,15 @@ export default function App() {
           ) as { ok: boolean; svg?: string }
           if (result.ok && result.svg) {
             text = result.svg
-            inkscapeHandledText = true
+            // Only suppress text warning if Inkscape actually removed all text nodes
+            if (!/<text[\s>]/i.test(text)) {
+              appHandledTextWarning = true
+            }
           } else {
             setSvgWarning(
               'Hinweis: Text-Elemente wurden übersprungen — zum Schneiden bitte in Inkscape zu Pfaden konvertieren (Pfad → Objekt in Pfad umwandeln).',
             )
+            appHandledTextWarning = true
           }
         }
 
@@ -60,7 +64,9 @@ export default function App() {
         const paths = parseSvgToMmPaths(
           text,
           0.05,
-          inkscapeHandledText ? undefined : (msg) => setSvgWarning(msg),
+          appHandledTextWarning
+            ? (msg) => { if (!/Text-Elemente/i.test(msg)) setSvgWarning(msg) }
+            : (msg) => setSvgWarning(msg),
         )
         setParsedPaths(paths)
         reset()

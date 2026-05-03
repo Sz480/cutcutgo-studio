@@ -35,7 +35,7 @@ export function parseSvgToMmPaths(
   // Warn on <text> elements
   const textEls = doc.querySelectorAll('text')
   if (textEls.length > 0 && onWarning) {
-    onWarning(`Text-Elemente werden nicht unterstützt — bitte in Inkscape zu Pfaden konvertieren (Pfad → Objekt in Pfad umwandeln).`)
+    onWarning('Hinweis: Text-Elemente wurden übersprungen — zum Schneiden bitte in Inkscape zu Pfaden konvertieren (Pfad → Objekt in Pfad umwandeln).')
   }
 
   // Resolve <use> elements
