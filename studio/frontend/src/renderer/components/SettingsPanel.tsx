@@ -1,4 +1,5 @@
 import type { CutSettings, MediaPreset } from '../types'
+import { MAT_SIZES } from '../types'
 
 interface Props {
   settings: CutSettings
@@ -10,9 +11,30 @@ export function SettingsPanel({ settings, mediaPresets, onChange }: Props) {
   const set = <K extends keyof CutSettings>(key: K, value: CutSettings[K]) =>
     onChange({ ...settings, [key]: value })
 
+  const selectedMatIdx = MAT_SIZES.findIndex(
+    m => m.widthMm === settings.media_width_mm && m.heightMm === settings.media_height_mm,
+  )
+  const matIdx = selectedMatIdx >= 0 ? selectedMatIdx : MAT_SIZES.length - 1
+
   return (
     <aside className="w-full flex flex-col gap-3 text-sm text-white">
       <h2 className="font-semibold text-base">Cut Settings</h2>
+
+      <label className="flex flex-col gap-1">
+        <span>Mattengröße</span>
+        <select
+          className="bg-gray-700 rounded px-2 py-1"
+          value={matIdx}
+          onChange={e => {
+            const m = MAT_SIZES[Number(e.target.value)]
+            onChange({ ...settings, media_width_mm: m.widthMm, media_height_mm: m.heightMm })
+          }}
+        >
+          {MAT_SIZES.map((m, i) => (
+            <option key={i} value={i}>{m.label}</option>
+          ))}
+        </select>
+      </label>
 
       <label className="flex flex-col gap-1">
         <span>Media</span>
