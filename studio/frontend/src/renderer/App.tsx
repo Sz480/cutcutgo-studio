@@ -64,9 +64,8 @@ export default function App() {
         const paths = parseSvgToMmPaths(
           text,
           0.05,
-          appHandledTextWarning
-            ? (msg) => { if (!/Text-Elemente/i.test(msg)) setSvgWarning(msg) }
-            : (msg) => setSvgWarning(msg),
+          (msg) => setSvgWarning(msg),
+          appHandledTextWarning,
         )
         setParsedPaths(paths)
         reset()

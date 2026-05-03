@@ -80,6 +80,7 @@ export function Canvas({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={endDrag}
+        onPointerCancel={endDrag}
       >
         {/* Grid — fixed to mat */}
         {gridLinesX.map(i => (

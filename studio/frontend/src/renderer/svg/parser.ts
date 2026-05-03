@@ -11,6 +11,7 @@ export function parseSvgToMmPaths(
   svgString: string,
   smoothness = 0.05,
   onWarning?: (msg: string) => void,
+  suppressTextWarning = false,
 ): PathList {
   const parser = new DOMParser()
   const doc = parser.parseFromString(svgString, 'image/svg+xml')
@@ -34,7 +35,7 @@ export function parseSvgToMmPaths(
 
   // Warn on <text> elements
   const textEls = doc.querySelectorAll('text')
-  if (textEls.length > 0 && onWarning) {
+  if (textEls.length > 0 && onWarning && !suppressTextWarning) {
     onWarning('Hinweis: Text-Elemente wurden übersprungen — zum Schneiden bitte in Inkscape zu Pfaden konvertieren (Pfad → Objekt in Pfad umwandeln).')
   }
 
