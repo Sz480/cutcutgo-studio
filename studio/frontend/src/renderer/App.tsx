@@ -40,16 +40,28 @@ export default function App() {
       if (ext === 'svg') {
         let text = await file.text()
         setSvgWarning(null)
+        let inkscapeHandledText = false
+
         if (/<text[\s>]/i.test(text)) {
-          const result = await window.electron.ipcRenderer.invoke('svg:flattenText', text) as { ok: boolean; svg?: string }
+          const result = await window.electron.ipcRenderer.invoke(
+            'svg:flattenText', text,
+          ) as { ok: boolean; svg?: string }
           if (result.ok && result.svg) {
             text = result.svg
+            inkscapeHandledText = true
           } else {
-            setSvgWarning('Text-Elemente werden nicht unterstützt — bitte in Inkscape zu Pfaden konvertieren (Pfad → Objekt in Pfad umwandeln).')
+            setSvgWarning(
+              'Hinweis: Text-Elemente wurden übersprungen — zum Schneiden bitte in Inkscape zu Pfaden konvertieren (Pfad → Objekt in Pfad umwandeln).',
+            )
           }
         }
+
         setSvgContent(text)
-        const paths = parseSvgToMmPaths(text, 0.05, (msg) => setSvgWarning(msg))
+        const paths = parseSvgToMmPaths(
+          text,
+          0.05,
+          inkscapeHandledText ? undefined : (msg) => setSvgWarning(msg),
+        )
         setParsedPaths(paths)
         reset()
       } else if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
@@ -100,8 +112,15 @@ export default function App() {
       />
 
       {svgWarning && (
-        <div className="px-4 py-1 bg-yellow-900/60 text-yellow-300 text-xs border-b border-yellow-700">
-          {svgWarning}
+        <div className="flex items-center gap-2 px-4 py-1 bg-yellow-900/60 text-yellow-300 text-xs border-b border-yellow-700">
+          <span className="flex-1">{svgWarning}</span>
+          <button
+            onClick={() => setSvgWarning(null)}
+            className="ml-2 text-yellow-400 hover:text-yellow-200 leading-none"
+            aria-label="Meldung schließen"
+          >
+            ✕
+          </button>
         </div>
       )}
 
