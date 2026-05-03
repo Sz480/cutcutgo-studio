@@ -105,6 +105,10 @@ export default function App() {
     send({ paths: parsedPaths, settings })
   }, [parsedPaths, settings, send])
 
+  const handleOffsetChange = useCallback((x: number, y: number) => {
+    setSettings(s => ({ ...s, x_offset: Math.round(x * 10) / 10, y_offset: Math.round(y * 10) / 10 }))
+  }, [])
+
   return (
     <div className="flex flex-col h-screen bg-gray-950 text-white">
       <Toolbar
@@ -138,9 +142,7 @@ export default function App() {
           mediaHeightMm={settings.media_height_mm}
           xOffsetMm={settings.x_offset}
           yOffsetMm={settings.y_offset}
-          onOffsetChange={(x, y) =>
-            setSettings(s => ({ ...s, x_offset: Math.round(x * 10) / 10, y_offset: Math.round(y * 10) / 10 }))
-          }
+          onOffsetChange={handleOffsetChange}
         />
 
         <div className="w-64 flex-shrink-0 flex flex-col gap-2 p-2 bg-gray-900 overflow-y-auto">

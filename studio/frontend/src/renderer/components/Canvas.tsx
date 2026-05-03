@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import type { PathList } from '../types'
 
+function pathsToPolyline(paths: PathList, scale: number): string[] {
+  return paths
+    .filter(p => p.length >= 2)
+    .map(p => p.map(pt => `${pt[0] * scale},${pt[1] * scale}`).join(' '))
+}
+
 interface Props {
   svgContent: string | null
   previewPaths: PathList | null
@@ -34,13 +40,14 @@ export function Canvas({
 
   const hasContent = !!(svgContent || previewPaths)
 
-  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+  const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
     if (!hasContent || !onOffsetChange) return
+    e.currentTarget.setPointerCapture(e.pointerId)
     setDragOrigin({ px: e.clientX, py: e.clientY, ox: xOffsetMm, oy: yOffsetMm })
     e.preventDefault()
   }
 
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     if (!dragOrigin || !onOffsetChange) return
     const dx = (e.clientX - dragOrigin.px) / scale
     const dy = (e.clientY - dragOrigin.py) / scale
@@ -48,11 +55,6 @@ export function Canvas({
   }
 
   const endDrag = () => setDragOrigin(null)
-
-  const pathsToPolyline = (paths: PathList): string[] =>
-    paths
-      .filter(p => p.length >= 2)
-      .map(p => p.map(pt => `${pt[0] * scale},${pt[1] * scale}`).join(' '))
 
   const gridLinesX = Array.from({ length: Math.ceil(mediaWidthMm / 10) }, (_, i) => i)
   const gridLinesY = Array.from({ length: Math.ceil(mediaHeightMm / 10) }, (_, i) => i)
@@ -72,12 +74,12 @@ export function Canvas({
         width={canvasW}
         height={canvasH}
         viewBox={`0 0 ${canvasW} ${canvasH}`}
+        overflow="hidden"
         className="border border-gray-600 shadow-lg"
         style={{ background: MAT_COLOUR, cursor: cursorStyle }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={endDrag}
-        onMouseLeave={endDrag}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={endDrag}
       >
         {/* Grid — fixed to mat */}
         {gridLinesX.map(i => (
@@ -110,7 +112,7 @@ export function Canvas({
             </foreignObject>
           )}
 
-          {previewPaths && pathsToPolyline(previewPaths).map((pts, i) => (
+          {previewPaths && pathsToPolyline(previewPaths, scale).map((pts, i) => (
             <polyline
               key={i}
               points={pts}
