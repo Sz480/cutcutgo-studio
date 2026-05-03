@@ -11,6 +11,8 @@ import { Canvas } from './components/Canvas'
 import { SettingsPanel } from './components/SettingsPanel'
 import { DeviceStatus } from './components/DeviceStatus'
 import { ImportPanel } from './components/ImportPanel'
+import { TeachPanel } from './components/TeachPanel'
+import { useTeachPanel } from './hooks/useTeachPanel'
 
 export default function App() {
   const [settings, setSettings] = useState<CutSettings>(DEFAULT_SETTINGS)
@@ -23,6 +25,14 @@ export default function App() {
   const { status: deviceStatus, loading: deviceLoading, error: deviceError, connect, disconnect } = useDevice()
   const { state: jobState, previewPaths, error: jobError, preview, send, cancel, reset } = useJob()
   const importHook = useImport()
+  const [showTeachPanel, setShowTeachPanel] = useState(false)
+  const teachPanelState = useTeachPanel(deviceStatus.connected)
+
+  useEffect(() => {
+    return window.electron.ipcRenderer.on('teach-panel:toggle', () => {
+      setShowTeachPanel(s => !s)
+    })
+  }, [])
 
   useEffect(() => {
     api.listMedia().then(setMediaPresets).catch(() => {})
@@ -173,6 +183,15 @@ export default function App() {
           error={importHook.traceError}
           onAccept={handleImportAccept}
           onCancel={handleImportCancel}
+        />
+      )}
+
+      {showTeachPanel && (
+        <TeachPanel
+          state={teachPanelState}
+          deviceConnected={deviceStatus.connected}
+          jobBusy={jobState === 'previewing' || jobState === 'sending'}
+          onClose={() => setShowTeachPanel(false)}
         />
       )}
     </div>

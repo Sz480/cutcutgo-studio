@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, Menu } from 'electron'
 import { join } from 'path'
 import { execFile } from 'child_process'
 import { writeFileSync, readFileSync, unlinkSync } from 'fs'
@@ -99,6 +99,25 @@ app.whenReady().then(async () => {
   }
 
   createWindow()
+
+  Menu.setApplicationMenu(
+    Menu.buildFromTemplate([
+      { role: 'editMenu' },
+      { role: 'viewMenu' },
+      { role: 'windowMenu' },
+      {
+        label: 'Extras',
+        submenu: [
+          {
+            label: 'Teach Panel',
+            accelerator: 'CmdOrCtrl+Shift+T',
+            click: () => mainWindow?.webContents.send('teach-panel:toggle'),
+          },
+        ],
+      },
+      { role: 'helpMenu' },
+    ])
+  )
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
