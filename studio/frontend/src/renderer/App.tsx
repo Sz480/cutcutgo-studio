@@ -136,6 +136,11 @@ export default function App() {
           previewPaths={previewPaths}
           mediaWidthMm={settings.media_width_mm}
           mediaHeightMm={settings.media_height_mm}
+          xOffsetMm={settings.x_offset}
+          yOffsetMm={settings.y_offset}
+          onOffsetChange={(x, y) =>
+            setSettings(s => ({ ...s, x_offset: Math.round(x * 10) / 10, y_offset: Math.round(y * 10) / 10 }))
+          }
         />
 
         <div className="w-64 flex-shrink-0 flex flex-col gap-2 p-2 bg-gray-900 overflow-y-auto">
