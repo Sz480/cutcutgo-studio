@@ -101,7 +101,7 @@ export interface MatSize {
   heightMm: number
 }
 
-export const MAT_SIZES: MatSize[] = [
-  { label: '12" × 12"  (304,8 × 304,8 mm)', widthMm: 304.8, heightMm: 304.8 },
-  { label: '12" × 24"  (304,8 × 609,6 mm)', widthMm: 304.8, heightMm: 609.6 },
-]
+export const MAT_SIZES = [
+  { label: '12" × 12" (304.8 × 304.8 mm)', widthMm: 304.8, heightMm: 304.8 },
+  { label: '12" × 24" (304.8 × 609.6 mm)', widthMm: 304.8, heightMm: 609.6 },
+] as const satisfies readonly MatSize[]
