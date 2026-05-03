@@ -14,7 +14,7 @@ export function SettingsPanel({ settings, mediaPresets, onChange }: Props) {
   const selectedMatIdx = MAT_SIZES.findIndex(
     m => m.widthMm === settings.media_width_mm && m.heightMm === settings.media_height_mm,
   )
-  const matIdx = selectedMatIdx >= 0 ? selectedMatIdx : MAT_SIZES.length - 1
+  const isCustomSize = selectedMatIdx < 0
 
   return (
     <aside className="w-full flex flex-col gap-3 text-sm text-white">
@@ -24,14 +24,20 @@ export function SettingsPanel({ settings, mediaPresets, onChange }: Props) {
         <span>Mattengröße</span>
         <select
           className="bg-gray-700 rounded px-2 py-1"
-          value={matIdx}
+          value={isCustomSize ? '' : selectedMatIdx}
           onChange={e => {
+            if (e.target.value === '') return
             const m = MAT_SIZES[Number(e.target.value)]
             onChange({ ...settings, media_width_mm: m.widthMm, media_height_mm: m.heightMm })
           }}
         >
+          {isCustomSize && (
+            <option value="" disabled>
+              Benutzerdefiniert ({settings.media_width_mm}×{settings.media_height_mm} mm)
+            </option>
+          )}
           {MAT_SIZES.map((m, i) => (
-            <option key={i} value={i}>{m.label}</option>
+            <option key={m.label} value={i}>{m.label}</option>
           ))}
         </select>
       </label>
