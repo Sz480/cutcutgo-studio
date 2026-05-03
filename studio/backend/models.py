@@ -75,3 +75,18 @@ class MediaPreset(BaseModel):
     name: str
     default_pressure: float
     default_clearance: float
+
+
+class JogRequest(BaseModel):
+    dx_mm: float
+    dy_mm: float
+
+
+class ToolRequest(BaseModel):
+    action: str  # "up" | "pen" | "blade"
+
+
+class PositionResponse(BaseModel):
+    x_mm: float
+    y_mm: float
+    tool_state: str  # "up" | "pen" | "blade"
