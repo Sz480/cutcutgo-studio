@@ -87,6 +87,12 @@ export interface TraceResult {
   layers: ColorLayer[]
 }
 
+export interface PositionResponse {
+  x_mm: number
+  y_mm: number
+  tool_state: 'up' | 'pen' | 'blade'
+}
+
 export const DEFAULT_TRACE_PARAMS: TraceParams = {
   mode: 'silhouette',
   threshold: 128,

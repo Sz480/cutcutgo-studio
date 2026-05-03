@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type {
-  CutJob, DeviceStatus, JobResponse, MediaPreset, TraceParams, TraceResult
+  CutJob, DeviceStatus, JobResponse, MediaPreset, TraceParams, TraceResult, PositionResponse
 } from '../types'
 
 const BASE = 'http://127.0.0.1:8765'
@@ -51,6 +51,31 @@ export const api = {
     const res = await axios.post(`${BASE}/api/import/trace`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
+    return res.data
+  },
+
+  async jogDevice(dx_mm: number, dy_mm: number): Promise<PositionResponse> {
+    const res = await axios.post(`${BASE}/api/device/jog`, { dx_mm, dy_mm })
+    return res.data
+  },
+
+  async homeDevice(): Promise<PositionResponse> {
+    const res = await axios.post(`${BASE}/api/device/home`)
+    return res.data
+  },
+
+  async setTool(action: 'up' | 'pen' | 'blade'): Promise<PositionResponse> {
+    const res = await axios.post(`${BASE}/api/device/tool`, { action })
+    return res.data
+  },
+
+  async getPosition(): Promise<PositionResponse> {
+    const res = await axios.get(`${BASE}/api/device/position`)
+    return res.data
+  },
+
+  async resetPosition(): Promise<PositionResponse> {
+    const res = await axios.post(`${BASE}/api/device/reset-position`)
     return res.data
   },
 }
