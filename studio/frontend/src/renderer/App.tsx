@@ -38,9 +38,17 @@ export default function App() {
       const ext = file.name.split('.').pop()?.toLowerCase()
 
       if (ext === 'svg') {
-        const text = await file.text()
-        setSvgContent(text)
+        let text = await file.text()
         setSvgWarning(null)
+        if (/<text[\s>]/i.test(text)) {
+          const result = await window.electron.ipcRenderer.invoke('svg:flattenText', text) as { ok: boolean; svg?: string }
+          if (result.ok && result.svg) {
+            text = result.svg
+          } else {
+            setSvgWarning('Text-Elemente werden nicht unterstützt — bitte in Inkscape zu Pfaden konvertieren (Pfad → Objekt in Pfad umwandeln).')
+          }
+        }
+        setSvgContent(text)
         const paths = parseSvgToMmPaths(text, 0.05, (msg) => setSvgWarning(msg))
         setParsedPaths(paths)
         reset()

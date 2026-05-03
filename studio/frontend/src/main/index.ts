@@ -1,7 +1,59 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { join } from 'path'
+import { execFile } from 'child_process'
+import { writeFileSync, readFileSync, unlinkSync } from 'fs'
+import { tmpdir } from 'os'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { startPythonBackend, stopPythonBackend } from './python_manager'
+
+const INKSCAPE_CANDIDATES = [
+  'inkscape',
+  'C:\\Program Files\\Inkscape\\bin\\inkscape.exe',
+  'C:\\Program Files (x86)\\Inkscape\\bin\\inkscape.exe',
+  '/usr/bin/inkscape',
+  '/usr/local/bin/inkscape',
+  '/Applications/Inkscape.app/Contents/MacOS/inkscape',
+]
+
+function tryFlattenWithInkscape(svgContent: string, candidate: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const ts = Date.now()
+    const tmpIn = join(tmpdir(), `ccg-${ts}-in.svg`)
+    const tmpOut = join(tmpdir(), `ccg-${ts}-out.svg`)
+    writeFileSync(tmpIn, svgContent, 'utf8')
+    execFile(
+      candidate,
+      ['--actions=select-all;object-to-path', `--export-filename=${tmpOut}`, tmpIn],
+      { timeout: 10000 },
+      (err) => {
+        try { unlinkSync(tmpIn) } catch { /* ignore */ }
+        if (err) {
+          try { unlinkSync(tmpOut) } catch { /* ignore */ }
+          return reject(err)
+        }
+        try {
+          const result = readFileSync(tmpOut, 'utf8')
+          unlinkSync(tmpOut)
+          resolve(result)
+        } catch (e) {
+          reject(e)
+        }
+      },
+    )
+  })
+}
+
+ipcMain.handle('svg:flattenText', async (_event, svgContent: string) => {
+  for (const candidate of INKSCAPE_CANDIDATES) {
+    try {
+      const svg = await tryFlattenWithInkscape(svgContent, candidate)
+      return { ok: true, svg }
+    } catch {
+      // try next candidate
+    }
+  }
+  return { ok: false }
+})
 
 let mainWindow: BrowserWindow | null = null
 
