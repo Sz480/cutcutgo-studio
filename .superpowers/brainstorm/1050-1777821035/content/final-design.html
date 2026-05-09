@@ -1,0 +1,120 @@
+<h2>Finales Teach-Panel Design</h2>
+<p class="subtitle">So soll das schwebende Panel aussehen — bitte bestätigen oder Feedback geben.</p>
+
+<div style="display:flex; gap:32px; flex-wrap:wrap; align-items:flex-start; justify-content:center; margin-top:16px;">
+
+  <!-- Panel mockup -->
+  <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+    <div class="label">Teach Panel (1:1 Vorschau, skaliert)</div>
+    <div style="width:220px; background:#1e293b; border:2px solid #3b82f6; border-radius:10px; box-shadow:0 8px 32px #0008; font-size:10px; color:#e2e8f0; user-select:none;">
+
+      <!-- Title bar (draggable handle) -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:7px 10px; background:#0f172a; border-radius:8px 8px 0 0; cursor:grab; border-bottom:1px solid #334155;">
+        <span style="color:#60a5fa; font-weight:bold; font-size:11px;">⚙ Teach Panel</span>
+        <span style="color:#475569; font-size:12px; cursor:pointer; padding:0 2px;">✕</span>
+      </div>
+
+      <div style="padding:10px;">
+
+        <!-- Position display -->
+        <div style="display:flex; gap:6px; margin-bottom:9px;">
+          <div style="flex:1; background:#0f172a; border:1px solid #334155; border-radius:4px; padding:4px 6px; text-align:center;">
+            <div style="color:#64748b; font-size:8px; margin-bottom:1px;">X</div>
+            <div style="color:#38bdf8; font-weight:bold; font-size:12px;">0.0 <span style="font-size:8px;color:#64748b;">mm</span></div>
+          </div>
+          <div style="flex:1; background:#0f172a; border:1px solid #334155; border-radius:4px; padding:4px 6px; text-align:center;">
+            <div style="color:#64748b; font-size:8px; margin-bottom:1px;">Y</div>
+            <div style="color:#38bdf8; font-weight:bold; font-size:12px;">0.0 <span style="font-size:8px;color:#64748b;">mm</span></div>
+          </div>
+          <div style="flex:1; background:#0f172a; border:1px solid #334155; border-radius:4px; padding:4px 6px; text-align:center;">
+            <div style="color:#64748b; font-size:8px; margin-bottom:1px;">Tool</div>
+            <div style="color:#4ade80; font-weight:bold; font-size:10px;">▲ UP</div>
+          </div>
+        </div>
+
+        <!-- Step size toggles -->
+        <div style="color:#64748b; font-size:8px; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.05em;">Schrittweite (mm)</div>
+        <div style="display:flex; gap:3px; margin-bottom:10px;">
+          <div style="flex:1;background:#1d4ed8;border:1px solid #3b82f6;border-radius:4px;text-align:center;padding:3px 0;color:#bfdbfe;font-weight:bold;">0.1</div>
+          <div style="flex:1;background:#1a1a2e;border:1px solid #334155;border-radius:4px;text-align:center;padding:3px 0;">1</div>
+          <div style="flex:1;background:#1a1a2e;border:1px solid #334155;border-radius:4px;text-align:center;padding:3px 0;">5</div>
+          <div style="flex:1;background:#1a1a2e;border:1px solid #334155;border-radius:4px;text-align:center;padding:3px 0;">10</div>
+        </div>
+
+        <!-- D-Pad -->
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:4px; width:102px; margin:0 auto 10px;">
+          <div></div>
+          <button style="background:#1e3a5f;border:1px solid #2563eb;border-radius:5px;padding:7px 0;text-align:center;color:#93c5fd;font-size:13px;cursor:pointer;">▲</button>
+          <div></div>
+          <button style="background:#1e3a5f;border:1px solid #2563eb;border-radius:5px;padding:7px 0;text-align:center;color:#93c5fd;font-size:13px;cursor:pointer;">◀</button>
+          <button style="background:#052e16;border:1px solid #16a34a;border-radius:5px;padding:7px 0;text-align:center;color:#4ade80;font-size:11px;cursor:pointer;">🏠</button>
+          <button style="background:#1e3a5f;border:1px solid #2563eb;border-radius:5px;padding:7px 0;text-align:center;color:#93c5fd;font-size:13px;cursor:pointer;">▶</button>
+          <div></div>
+          <button style="background:#1e3a5f;border:1px solid #2563eb;border-radius:5px;padding:7px 0;text-align:center;color:#93c5fd;font-size:13px;cursor:pointer;">▼</button>
+          <div></div>
+        </div>
+
+        <!-- Action buttons -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button style="background:#172554;border:1px solid #1d4ed8;border-radius:5px;padding:5px 0;color:#93c5fd;cursor:pointer;">⬆ Tool Up</button>
+          <button style="background:#2d1b69;border:1px solid #7c3aed;border-radius:5px;padding:5px 0;color:#c4b5fd;cursor:pointer;">✒ Pen ↓</button>
+          <button style="background:#450a0a;border:1px solid #b91c1c;border-radius:5px;padding:5px 0;color:#fca5a5;cursor:pointer;">🔪 Blade ↓</button>
+          <button style="background:#0f172a;border:1px solid #334155;border-radius:5px;padding:5px 0;color:#64748b;cursor:pointer;">↺ Reset XY</button>
+        </div>
+
+        <!-- Keyboard hint -->
+        <div style="margin-top:8px; color:#374151; font-size:8px; text-align:center;">
+          ↑↓←→ Pfeiltasten wenn Panel aktiv
+        </div>
+
+      </div>
+    </div>
+    <div style="color:#64748b; font-size:11px; text-align:center; max-width:220px;">Schwebend, verschiebbar per Titelleiste.<br>Öffnen via <strong style="color:#94a3b8;">Extras → Teach Panel</strong> im Menü.</div>
+  </div>
+
+  <!-- Architecture summary -->
+  <div style="max-width:340px;">
+    <h3 style="color:#e2e8f0; margin-bottom:12px;">Architektur-Überblick</h3>
+
+    <div style="margin-bottom:12px;">
+      <div class="label">Backend — 4 neue Endpunkte</div>
+      <div style="background:#0f172a; border-radius:6px; padding:10px; font-family:monospace; font-size:10px; color:#94a3b8; margin-top:4px; line-height:1.8;">
+        POST /api/device/jog<br>
+        <span style="color:#64748b;">&nbsp;&nbsp;body: {dx_mm, dy_mm}</span><br>
+        POST /api/device/home<br>
+        <span style="color:#64748b;">&nbsp;&nbsp;Referenzfahrt → Position reset 0,0</span><br>
+        POST /api/device/tool<br>
+        <span style="color:#64748b;">&nbsp;&nbsp;body: {action: "up"|"pen"|"blade"}</span><br>
+        GET  /api/device/position<br>
+        <span style="color:#64748b;">&nbsp;&nbsp;→ {x, y, tool_state}</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div class="label">Frontend — neue Dateien</div>
+      <div style="background:#0f172a; border-radius:6px; padding:10px; font-family:monospace; font-size:10px; color:#94a3b8; margin-top:4px; line-height:1.8;">
+        components/TeachPanel.tsx<br>
+        hooks/useTeachPanel.ts<br>
+        <span style="color:#64748b;">+ Erweiterungen in:</span><br>
+        App.tsx (Panel-State)<br>
+        api/client.ts (neue Calls)<br>
+        main/index.ts (Electron-Menü)<br>
+        preload/index.ts (IPC-Bridge)
+      </div>
+    </div>
+
+    <div>
+      <div class="label">Sicherheit</div>
+      <ul style="color:#94a3b8; font-size:11px; margin:4px 0 0 16px; line-height:1.9;">
+        <li>Jog gesperrt wenn kein Gerät verbunden</li>
+        <li>Jog gesperrt während Schneidejob läuft</li>
+        <li>Home hebt Tool immer zuerst an</li>
+        <li>Tool-Zustand sichtbar (UP / PEN / BLADE)</li>
+        <li>"Reset XY" setzt nur den Positionszähler zurück (kein Move)</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:24px; text-align:center;">Passt das so? Oder soll etwas geändert werden?</p>

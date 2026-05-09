@@ -53,26 +53,28 @@ describe('parseSvgToMmPaths', () => {
   })
 
   it('H command: horizontal lineto moves x only', () => {
-    // M 0 10 H 50 → line from (0,10) to (50,10)
+    // M 0 10 H 50 → line from (0,10) to (50,10); normalized → (0,0) to (50,0)
     const paths = parseSvgToMmPaths(svgWithPath('M 0 10 H 50'))
     expect(paths.length).toBe(1)
     const pts = paths[0]
     expect(pts.length).toBe(2)
+    // After normalization both y values shift to 0; x displacement preserved
     expect(pts[0][0]).toBeCloseTo(0)
-    expect(pts[0][1]).toBeCloseTo(10)
+    expect(pts[0][1]).toBeCloseTo(0)
     expect(pts[1][0]).toBeCloseTo(50)
-    expect(pts[1][1]).toBeCloseTo(10)
+    expect(pts[1][1]).toBeCloseTo(0)
   })
 
   it('V command: vertical lineto moves y only', () => {
-    // M 20 0 V 60 → line from (20,0) to (20,60)
+    // M 20 0 V 60 → line from (20,0) to (20,60); normalized → (0,0) to (0,60)
     const paths = parseSvgToMmPaths(svgWithPath('M 20 0 V 60'))
     expect(paths.length).toBe(1)
     const pts = paths[0]
     expect(pts.length).toBe(2)
-    expect(pts[0][0]).toBeCloseTo(20)
+    // After normalization x shifts to 0; y displacement preserved
+    expect(pts[0][0]).toBeCloseTo(0)
     expect(pts[0][1]).toBeCloseTo(0)
-    expect(pts[1][0]).toBeCloseTo(20)
+    expect(pts[1][0]).toBeCloseTo(0)
     expect(pts[1][1]).toBeCloseTo(60)
   })
 
@@ -88,12 +90,15 @@ describe('parseSvgToMmPaths', () => {
 
   it('S command: smooth cubic bezier reaches endpoint', () => {
     // M 0 0 C 10 -10 90 -10 100 0 S 190 10 200 0 → endpoint at (200,0)
+    // Curve dips to negative y; after normalization start and end both shift by the same amount.
     const paths = parseSvgToMmPaths(svgWithPath('M 0 0 C 10 -10 90 -10 100 0 S 190 10 200 0'))
     expect(paths.length).toBe(1)
     const pts = paths[0]
+    const first = pts[0]
     const last = pts[pts.length - 1]
     expect(last[0]).toBeCloseTo(200, 1)
-    expect(last[1]).toBeCloseTo(0, 1)
+    // Start and end share the same pre-normalization y=0, so they end up at the same y after shift
+    expect(last[1]).toBeCloseTo(first[1], 1)
   })
 
   it('A command: arc reaches endpoint', () => {
@@ -104,6 +109,20 @@ describe('parseSvgToMmPaths', () => {
     const last = pts[pts.length - 1]
     expect(last[0]).toBeCloseTo(0, 1)
     expect(last[1]).toBeCloseTo(10, 1)
+  })
+
+  it('relative m after Z uses subpath-start as reference, not last drawn point', () => {
+    // Two separate sub-paths: first from (0,0)→(10,0), second starting 20 units right of
+    // the FIRST subpath start (per SVG spec Z resets current point to subpath start).
+    // d="M 0 0 L 10 0 Z m 20 0 L 30 0"
+    //   sub1: M(0,0) → L(10,0) → Z  (current point resets to 0,0)
+    //   sub2: m 20 0 → absolute (0+20, 0+0)=(20,0), L(30,0)
+    const paths = parseSvgToMmPaths(svgWithPath('M 0 0 L 10 0 Z m 20 0 L 30 0'))
+    // Both subpaths should be captured; after normalization minX=0
+    const allX = paths.flat().map(pt => pt[0])
+    // Second subpath starts at x=20 (before normalization); first at x=0.
+    // Max x should be 30.
+    expect(Math.max(...allX)).toBeCloseTo(30, 0)
   })
 })
 

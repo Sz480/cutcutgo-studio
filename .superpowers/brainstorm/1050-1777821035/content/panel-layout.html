@@ -1,0 +1,129 @@
+<h2>Wie soll das Teach-Panel aufgebaut sein?</h2>
+<p class="subtitle">Das schwebende Panel braucht Jog-Steuerung, Schrittweiten-Auswahl und Aktions-Buttons.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px; background:#0f172a; border-radius:6px; display:flex; justify-content:center;">
+      <!-- Panel mockup A: D-Pad + Schrittweite oben + Aktionen unten -->
+      <div style="width:200px; background:#1e293b; border:2px solid #3b82f6; border-radius:10px; padding:10px; font-size:9px; color:#e2e8f0;">
+        <div style="text-align:center; color:#60a5fa; font-weight:bold; margin-bottom:6px; font-size:10px;">⚙ Teach</div>
+        <!-- Schrittweite -->
+        <div style="color:#94a3b8; margin-bottom:4px;">Schrittweite</div>
+        <div style="display:flex; gap:3px; margin-bottom:8px;">
+          <div style="flex:1;background:#0f172a;border:1px solid #3b82f6;border-radius:3px;text-align:center;padding:2px;color:#60a5fa;">0.1</div>
+          <div style="flex:1;background:#0f172a;border:1px solid #374151;border-radius:3px;text-align:center;padding:2px;">1</div>
+          <div style="flex:1;background:#0f172a;border:1px solid #374151;border-radius:3px;text-align:center;padding:2px;">5</div>
+          <div style="flex:1;background:#0f172a;border:1px solid #374151;border-radius:3px;text-align:center;padding:2px;">10</div>
+        </div>
+        <!-- D-Pad -->
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:3px; width:90px; margin:0 auto 8px;">
+          <div></div>
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;text-align:center;padding:4px;">▲</div>
+          <div></div>
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;text-align:center;padding:4px;">◀</div>
+          <div style="background:#1a1a2e;border:1px solid #475569;border-radius:3px;text-align:center;padding:4px;color:#94a3b8;font-size:8px;">0,0</div>
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;text-align:center;padding:4px;">▶</div>
+          <div></div>
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;text-align:center;padding:4px;">▼</div>
+          <div></div>
+        </div>
+        <!-- Aktionen -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:3px;">
+          <div style="background:#052e16;border:1px solid #16a34a;border-radius:3px;text-align:center;padding:3px;color:#4ade80;">🏠 Home</div>
+          <div style="background:#172554;border:1px solid #1d4ed8;border-radius:3px;text-align:center;padding:3px;color:#93c5fd;">⬆ Tool</div>
+          <div style="background:#2d1b69;border:1px solid #7c3aed;border-radius:3px;text-align:center;padding:3px;color:#c4b5fd;">✒ Pen ↓</div>
+          <div style="background:#450a0a;border:1px solid #b91c1c;border-radius:3px;text-align:center;padding:3px;color:#fca5a5;">🔪 Blade ↓</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Kompakt (D-Pad)</h3>
+      <p>Klassisches D-Pad für X/Y. Schrittweite oben als Toggles. Aktions-Buttons unten. Platzsparend, ca. 200×260px.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px; background:#0f172a; border-radius:6px; display:flex; justify-content:center;">
+      <!-- Panel mockup B: getrennte X/Y Zeilen + Aktionen rechts -->
+      <div style="width:240px; background:#1e293b; border:2px solid #3b82f6; border-radius:10px; padding:10px; font-size:9px; color:#e2e8f0;">
+        <div style="text-align:center; color:#60a5fa; font-weight:bold; margin-bottom:8px; font-size:10px;">⚙ Teach</div>
+        <!-- Achsen -->
+        <div style="color:#94a3b8; margin-bottom:3px;">X-Achse</div>
+        <div style="display:flex; gap:3px; align-items:center; margin-bottom:6px;">
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;padding:4px 10px;">◀◀</div>
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;padding:4px 8px;">◀</div>
+          <div style="flex:1;background:#0f172a;border:1px solid #475569;border-radius:3px;text-align:center;padding:4px;color:#94a3b8;">0.0mm</div>
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;padding:4px 8px;">▶</div>
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;padding:4px 10px;">▶▶</div>
+        </div>
+        <div style="color:#94a3b8; margin-bottom:3px;">Y-Achse</div>
+        <div style="display:flex; gap:3px; align-items:center; margin-bottom:8px;">
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;padding:4px 10px;">◀◀</div>
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;padding:4px 8px;">◀</div>
+          <div style="flex:1;background:#0f172a;border:1px solid #475569;border-radius:3px;text-align:center;padding:4px;color:#94a3b8;">0.0mm</div>
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;padding:4px 8px;">▶</div>
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;padding:4px 10px;">▶▶</div>
+        </div>
+        <div style="color:#94a3b8; font-size:8px; margin-bottom:3px;">◀◀ = groß &nbsp; ◀ = klein — wählbare Schrittweiten</div>
+        <!-- Aktionen -->
+        <div style="display:flex; gap:3px; flex-wrap:wrap;">
+          <div style="background:#052e16;border:1px solid #16a34a;border-radius:3px;padding:3px 6px;color:#4ade80;">🏠 Home</div>
+          <div style="background:#172554;border:1px solid #1d4ed8;border-radius:3px;padding:3px 6px;color:#93c5fd;">⬆ Tool</div>
+          <div style="background:#2d1b69;border:1px solid #7c3aed;border-radius:3px;padding:3px 6px;color:#c4b5fd;">✒ Pen↓</div>
+          <div style="background:#450a0a;border:1px solid #b91c1c;border-radius:3px;padding:3px 6px;color:#fca5a5;">🔪 Blade↓</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Getrennte Achsen</h3>
+      <p>X und Y als separate Zeilen mit je zwei Schrittweiten (klein/groß). Positions-Anzeige in der Mitte. Etwas breiter.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px; background:#0f172a; border-radius:6px; display:flex; justify-content:center;">
+      <!-- Panel mockup C: D-Pad mit Schrittweite als Schieberegler + Position -->
+      <div style="width:210px; background:#1e293b; border:2px solid #3b82f6; border-radius:10px; padding:10px; font-size:9px; color:#e2e8f0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="color:#60a5fa; font-weight:bold; font-size:10px;">⚙ Teach</span>
+          <span style="color:#94a3b8; font-size:8px;">X: 0.0 Y: 0.0</span>
+        </div>
+        <!-- Schrittweite Schieberegler -->
+        <div style="color:#94a3b8; margin-bottom:3px;">Schrittweite: <span style="color:#60a5fa;">1.0 mm</span></div>
+        <div style="background:#0f172a; border-radius:4px; height:6px; margin-bottom:8px; position:relative;">
+          <div style="position:absolute;left:30%;top:-3px;width:12px;height:12px;background:#3b82f6;border-radius:50%;border:2px solid #1e40af;"></div>
+          <div style="background:#1d4ed8;width:30%;height:100%;border-radius:4px;"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; color:#475569; font-size:8px; margin-bottom:6px;">
+          <span>0.1</span><span>0.5</span><span>1</span><span>5</span><span>10</span>
+        </div>
+        <!-- D-Pad -->
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:3px; width:90px; margin:0 auto 8px;">
+          <div></div>
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;text-align:center;padding:5px;">▲</div>
+          <div></div>
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;text-align:center;padding:5px;">◀</div>
+          <div style="background:#052e16;border:1px solid #16a34a;border-radius:3px;text-align:center;padding:5px;color:#4ade80;font-size:8px;">🏠</div>
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;text-align:center;padding:5px;">▶</div>
+          <div></div>
+          <div style="background:#1a1a2e;border:1px solid #374151;border-radius:3px;text-align:center;padding:5px;">▼</div>
+          <div></div>
+        </div>
+        <!-- Aktionen -->
+        <div style="display:flex; gap:3px;">
+          <div style="flex:1;background:#172554;border:1px solid #1d4ed8;border-radius:3px;text-align:center;padding:3px;color:#93c5fd;">⬆ Up</div>
+          <div style="flex:1;background:#2d1b69;border:1px solid #7c3aed;border-radius:3px;text-align:center;padding:3px;color:#c4b5fd;">✒ Pen</div>
+          <div style="flex:1;background:#450a0a;border:1px solid #b91c1c;border-radius:3px;text-align:center;padding:3px;color:#fca5a5;">🔪 Blade</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — D-Pad + Schieberegler</h3>
+      <p>D-Pad mit Home in der Mitte. Schrittweite als Slider (0.1 – 10mm). Position-Anzeige oben. Home-Button integriert.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Klick auf eine Option oder schreib im Terminal.</p>

@@ -68,7 +68,13 @@
       "Bash(npm run *)",
       "Bash(python -m pytest studio/backend/tests/ -v --tb=short)",
       "Bash(python *)",
-      "Bash(ls -la C:\\\\\\\\Git\\\\\\\\inkscape-cutcutgo-sz\\\\\\\\.worktrees\\\\\\\\file-import\\\\\\\\studio\\\\\\\\backend\\\\\\\\tests)"
+      "Bash(ls -la C:\\\\\\\\Git\\\\\\\\inkscape-cutcutgo-sz\\\\\\\\.worktrees\\\\\\\\file-import\\\\\\\\studio\\\\\\\\backend\\\\\\\\tests)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "PowerShell(git *)",
+      "Bash(Select-Object -Property Name, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(Select-Object Name)"
     ]
   }
 }

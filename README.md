@@ -1,4 +1,4 @@
-# inkscape-cutcutgo-sz
+# cutcutgo-studio
 
 Fork of inkscape-cutcutgo for bring the development forward with vibe coding.
 

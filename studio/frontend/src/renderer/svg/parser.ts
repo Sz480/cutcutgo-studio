@@ -68,6 +68,27 @@ export function parseSvgToMmPaths(
     if (points.length >= 2) result.push(points)
   })
 
+  // Normalize all paths so the bounding box starts at (0, 0).
+  // This ensures the design sits at the mat's upper-left corner when offset = (0,0),
+  // preventing negative offsets that would cut outside the mat boundary.
+  if (result.length > 0) {
+    let minX = Infinity, minY = Infinity
+    for (const path of result) {
+      for (const pt of path) {
+        if (pt[0] < minX) minX = pt[0]
+        if (pt[1] < minY) minY = pt[1]
+      }
+    }
+    if (minX !== 0 || minY !== 0) {
+      for (const path of result) {
+        for (const pt of path) {
+          pt[0] -= minX
+          pt[1] -= minY
+        }
+      }
+    }
+  }
+
   return result
 }
 
@@ -212,6 +233,7 @@ function parseSvgPath(d: string): Array<any> {
   const re = /([MLHVCSQTAZmlhvcsqtaz])([^MLHVCSQTAZmlhvcsqtaz]*)/g
   let m: RegExpExecArray | null
   let lastX = 0, lastY = 0
+  let subpathStartX = 0, subpathStartY = 0
   // Previous cubic/quadratic control points for S and T shortcuts
   let lastCubicCP: { x: number; y: number } | null = null
   let lastQuadCP: { x: number; y: number } | null = null
@@ -232,6 +254,7 @@ function parseSvgPath(d: string): Array<any> {
       for (let i = 0; i < nums.length; i += 2) {
         const x = nums[i] + ox, y = nums[i+1] + oy
         cmds.push({ type: i === 0 ? 'M' : 'L', x, y })
+        if (i === 0) { subpathStartX = x; subpathStartY = y }
         lastX = x; lastY = y
       }
     } else if (type === 'L') {
@@ -315,6 +338,8 @@ function parseSvgPath(d: string): Array<any> {
       }
     } else if (type === 'Z') {
       cmds.push({ type: 'Z' })
+      // Per SVG spec: after Z the current point is the subpath start
+      lastX = subpathStartX; lastY = subpathStartY
     }
   }
   return cmds

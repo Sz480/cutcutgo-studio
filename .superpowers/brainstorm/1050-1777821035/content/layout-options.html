@@ -1,0 +1,61 @@
+<h2>Wo soll das Teach-Panel erscheinen?</h2>
+<p class="subtitle">Die aktuelle App hat links die Canvas (Matte), rechts eine schmale Sidebar mit Einstellungen.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px; background:#0f172a; border-radius:6px;">
+      <!-- App mockup: floating overlay -->
+      <div style="display:flex; gap:6px; height:160px; position:relative;">
+        <div style="flex:1; background:#1a1a2e; border-radius:4px; border:1px solid #374151; display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:10px;">Canvas / Matte</div>
+        <div style="width:70px; background:#111827; border-radius:4px; border:1px solid #374151; display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:9px;text-align:center;">Settings<br/>Sidebar</div>
+        <!-- floating panel -->
+        <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:#1e293b;border:2px solid #3b82f6;border-radius:8px;padding:8px 16px;color:#60a5fa;font-size:9px;white-space:nowrap;box-shadow:0 8px 24px #0005;">
+          ⚙ Teach Panel (schwebend)
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Schwebende Palette</h3>
+      <p>Kleines Fenster das frei auf dem Canvas schweben kann. Kann verschoben werden. Immer sichtbar, überlappend.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px; background:#0f172a; border-radius:6px;">
+      <!-- App mockup: bottom panel -->
+      <div style="display:flex; flex-direction:column; gap:6px; height:160px;">
+        <div style="display:flex; gap:6px; flex:1;">
+          <div style="flex:1; background:#1a1a2e; border-radius:4px; border:1px solid #374151; display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:10px;">Canvas / Matte</div>
+          <div style="width:70px; background:#111827; border-radius:4px; border:1px solid #374151; display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:9px;text-align:center;">Settings<br/>Sidebar</div>
+        </div>
+        <div style="height:50px; background:#1e293b; border-radius:4px; border:2px solid #3b82f6; display:flex;align-items:center;justify-content:center;color:#60a5fa;font-size:9px;">
+          ↕ Teach Panel (ausklappbar unten)
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Unteres Panel</h3>
+      <p>Klappt am unteren Rand auf. Canvas bleibt sichtbar. Gut für breite Layouts (Jog-Buttons nebeneinander).</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px; background:#0f172a; border-radius:6px;">
+      <!-- App mockup: replaces sidebar -->
+      <div style="display:flex; gap:6px; height:160px;">
+        <div style="flex:1; background:#1a1a2e; border-radius:4px; border:1px solid #374151; display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:10px;">Canvas / Matte</div>
+        <div style="width:90px; background:#1e293b; border-radius:4px; border:2px solid #3b82f6; display:flex;align-items:center;justify-content:center;color:#60a5fa;font-size:9px;text-align:center;">
+          ⚙ Teach<br/>Panel<br/><span style="color:#6b7280;font-size:8px;">(ersetzt Sidebar)</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Sidebar ersetzen</h3>
+      <p>Im Teach-Modus ersetzt das Panel die rechte Sidebar vollständig. Umschalten über Toolbar-Button.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Klick auf eine Option — oder schreib mir direkt im Terminal.</p>
