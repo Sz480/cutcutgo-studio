@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { STEP_SIZES } from '../hooks/useTeachPanel'
 import type { TeachPanelState, StepSize } from '../hooks/useTeachPanel'
 
@@ -16,19 +16,6 @@ export function TeachPanel({ state, deviceConnected, jobBusy, onClose }: Props) 
   // Panel drag
   const [panelPos, setPanelPos] = useState({ x: window.innerWidth - 260, y: 80 })
   const dragOrigin = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null)
-
-  // Keyboard jog
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (disabled) return
-      if (e.key === 'ArrowRight') { e.preventDefault(); jog(stepMm, 0) }
-      else if (e.key === 'ArrowLeft') { e.preventDefault(); jog(-stepMm, 0) }
-      else if (e.key === 'ArrowDown') { e.preventDefault(); jog(0, stepMm) }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); jog(0, -stepMm) }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [disabled, jog, stepMm])
 
   const handleTitleDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId)
@@ -65,8 +52,12 @@ export function TeachPanel({ state, deviceConnected, jobBusy, onClose }: Props) 
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
-        <span className="text-blue-400 font-bold text-sm">⚙ Teach Panel</span>
-        <button onClick={onClose} className="text-slate-500 hover:text-slate-300 px-1 leading-none">✕</button>
+        <span className="text-blue-400 font-bold text-sm">⚙ Manual Mode</span>
+        <button
+          onClick={onClose}
+          onPointerDown={e => e.stopPropagation()}
+          className="text-slate-500 hover:text-slate-300 px-1 leading-none"
+        >✕</button>
       </div>
 
       <div className="p-3 space-y-3">
@@ -134,7 +125,6 @@ export function TeachPanel({ state, deviceConnected, jobBusy, onClose }: Props) 
           <ActionBtn label="↺ Reset XY" onClick={resetXY}                disabled={busy}     cls="border-slate-700 bg-slate-900  text-slate-400" />
         </div>
 
-        <div className="text-slate-600 text-[8px] text-center">↑↓←→ Pfeiltasten wenn Panel aktiv</div>
       </div>
     </div>
   )
