@@ -1,5 +1,6 @@
 from __future__ import annotations
 import sys
+import time
 import threading
 from pathlib import Path
 
@@ -92,7 +93,7 @@ class DeviceService:
             self._tool_state = "up"
 
     def home(self) -> None:
-        """Raise tool, run homing cycle ($H), reset tracked position to (0, 0)."""
+        """Raise tool, run homing cycle ($H), wait for completion, reset position."""
         with self._lock:
             if self._device is None:
                 raise RuntimeError("Device not connected")
@@ -100,12 +101,36 @@ class DeviceService:
             d.send_receive_command([b"G01Z-%fF10" % (d.pressure - d.clearance)])
             d.tool_up = True
             d.send_receive_command([b"$H"])
+            self._wait_for_grbl_idle(d, timeout=30.0)
             self._pos_x = 0.0
             self._pos_y = 0.0
             self._tool_state = "up"
 
+    def _wait_for_grbl_idle(self, d: "CricutMaker", timeout: float = 30.0) -> None:
+        """Poll GRBL with '?' until it reports Idle or timeout expires."""
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            time.sleep(0.3)
+            try:
+                d.dev.write(b"?")
+                prev_timeout = d.dev.timeout
+                d.dev.timeout = 1
+                resp = d.dev.readline()
+                d.dev.timeout = prev_timeout
+                if b"Idle" in resp:
+                    return
+            except Exception:
+                break
+
     def set_tool(self, action: str) -> None:
-        """Lower or raise the tool. action: 'up' | 'pen' | 'blade'."""
+        """Lower or raise the active tool carriage.
+
+        T1 = pen carriage. T2 = blade carriage.
+        IMPORTANT: T2 auto-lowers the blade internally; sending an additional
+        G01Z after T2 exceeds the soft limit and crashes GRBL. Do NOT add G01Z
+        after T2. T1 only switches the carriage; an explicit G01Z is needed.
+        Always raise the current tool before switching carriages.
+        """
         with self._lock:
             if self._device is None:
                 raise RuntimeError("Device not connected")
@@ -113,8 +138,21 @@ class DeviceService:
             if action == "up":
                 d.send_receive_command([b"G01Z-%fF10" % (d.pressure - d.clearance)])
                 d.tool_up = True
-            elif action in ("pen", "blade"):
+            elif action == "pen":
+                if not d.tool_up:
+                    # Safety: raise active tool before switching carriage
+                    d.send_receive_command([b"G01Z-%fF10" % (d.pressure - d.clearance)])
+                    d.tool_up = True
+                d.send_receive_command([b"T1"])
                 d.send_receive_command([b"G01Z-%fF10" % d.pressure])
+                d.tool_up = False
+            elif action == "blade":
+                if not d.tool_up:
+                    # Safety: raise active tool before switching carriage
+                    d.send_receive_command([b"G01Z-%fF10" % (d.pressure - d.clearance)])
+                    d.tool_up = True
+                # T2 auto-lowers blade to cutting depth — no additional G01Z
+                d.send_receive_command([b"T2"])
                 d.tool_up = False
             else:
                 raise ValueError(f"Unknown action: {action!r}")

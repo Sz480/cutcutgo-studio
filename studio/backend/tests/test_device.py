@@ -104,10 +104,65 @@ def test_set_tool_up():
 
 
 def test_set_tool_pen():
-    svc = _make_svc()
+    svc = _make_svc()           # tool_up=True (already up)
+    svc._device.tool_up = True
     svc.set_tool("pen")
     assert svc._tool_state == "pen"
     assert svc._device.tool_up is False
+    calls = svc._device.send_receive_command.call_args_list
+    assert calls[0][0][0] == [b"T1"]
+    assert calls[1][0][0] == [b"G01Z-8.500000F10"]
+
+
+def test_set_tool_pen_from_down_pre_raises_first():
+    """Pen when tool is down: raise first, then T1, then lower pen."""
+    svc = _make_svc(tool_state="blade")
+    svc._device.tool_up = False
+    svc.set_tool("pen")
+    calls = svc._device.send_receive_command.call_args_list
+    assert len(calls) == 3
+    assert calls[0][0][0] == [b"G01Z-7.500000F10"]  # pre-raise
+    assert calls[1][0][0] == [b"T1"]                 # select pen carriage
+    assert calls[2][0][0] == [b"G01Z-8.500000F10"]  # lower pen
+    assert svc._device.tool_up is False
+    assert svc._tool_state == "pen"
+
+
+def test_set_tool_blade_from_up_sends_T2_only():
+    """Blade when tool is up: T2 alone (firmware auto-lowers; extra G01Z crashes GRBL)."""
+    svc = _make_svc(tool_state="up")
+    svc._device.tool_up = True
+    svc.set_tool("blade")
+    calls = svc._device.send_receive_command.call_args_list
+    assert len(calls) == 1
+    assert calls[0][0][0] == [b"T2"]
+    assert svc._tool_state == "blade"
+    assert svc._device.tool_up is False
+
+
+def test_set_tool_blade_from_down_pre_raises_first():
+    """Blade when tool is down: raise first, then T2 only — no G01Z after T2."""
+    svc = _make_svc(tool_state="pen")
+    svc._device.tool_up = False
+    svc.set_tool("blade")
+    calls = svc._device.send_receive_command.call_args_list
+    assert len(calls) == 2
+    assert calls[0][0][0] == [b"G01Z-7.500000F10"]  # pre-raise
+    assert calls[1][0][0] == [b"T2"]                 # select blade — NO G01Z after this
+    assert svc._device.tool_up is False
+    assert svc._tool_state == "blade"
+
+
+def test_set_tool_up_sends_clearance_move():
+    """Tool Up raises the active carriage to travel height."""
+    svc = _make_svc(tool_state="pen")
+    svc._device.tool_up = False
+    svc.set_tool("up")
+    calls = svc._device.send_receive_command.call_args_list
+    assert len(calls) == 1
+    assert calls[0][0][0] == [b"G01Z-7.500000F10"]
+    assert svc._tool_state == "up"
+    assert svc._device.tool_up is True
 
 
 def test_reset_position():
