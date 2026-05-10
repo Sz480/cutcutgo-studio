@@ -2,6 +2,8 @@ from __future__ import annotations
 import sys
 import time
 import threading
+import datetime
+from collections import deque
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).parent.parent.parent
@@ -29,6 +31,7 @@ class DeviceService:
         self._pos_x: float = 0.0
         self._pos_y: float = 0.0
         self._tool_state: str = "up"
+        self._cmd_log: deque[str] = deque(maxlen=200)
 
     def connect(self) -> None:
         """Attempt to find and connect to the device. Raises RuntimeError if not found."""
@@ -44,6 +47,37 @@ class DeviceService:
                 self._device = None
                 self.port = None
                 raise RuntimeError(f"No CutCutGo device found: {exc}") from exc
+
+    def _send(self, d: "CricutMaker", cmds: list) -> None:
+        ts = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        for cmd in cmds:
+            self._cmd_log.append(f"{ts}  {cmd.decode('ascii', errors='replace')}")
+        d.send_receive_command(cmds)
+
+    def _send_timed(self, d: "CricutMaker", cmds: list, timeout_s: float = 60.0) -> None:
+        """Send each command with an explicit serial read timeout.
+
+        send_receive_command uses rx_timeout=20000 which pyserial treats as
+        20 000 seconds — effectively infinite. When GRBL enters a hard-alarm
+        state (e.g. limit switch triggered mid-move) it stops responding and
+        the thread blocks forever. This method bypasses that by writing directly
+        and capping each readline at timeout_s seconds.
+        """
+        ts = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        for cmd in cmds:
+            self._cmd_log.append(f"{ts}  {cmd.decode('ascii', errors='replace')}")
+            d.dev.write(cmd + b"\n")
+            prev = d.dev.timeout
+            d.dev.timeout = timeout_s
+            try:
+                d.dev.readline()
+            except Exception:
+                pass
+            finally:
+                d.dev.timeout = prev
+
+    def get_log(self) -> list[str]:
+        return list(self._cmd_log)
 
     def disconnect(self) -> None:
         with self._lock:
@@ -87,7 +121,7 @@ class DeviceService:
             new_x = max(0.0, self._pos_x + dx_mm)
             new_y = max(0.0, self._pos_y + dy_mm)
             cmds = self._device.move_mm_cmd(new_y, new_x)   # note: (mmy, mmx) order
-            self._device.send_receive_command(cmds)
+            self._send(self._device, cmds)
             self._pos_x = new_x
             self._pos_y = new_y
             self._tool_state = "up"
@@ -98,9 +132,7 @@ class DeviceService:
             if self._device is None:
                 raise RuntimeError("Device not connected")
             d = self._device
-            d.send_receive_command([b"G01Z-%fF10" % (d.pressure - d.clearance)])
-            d.tool_up = True
-            d.send_receive_command([b"$H"])
+            self._send(d, [b"$H"])
             self._wait_for_grbl_idle(d, timeout=30.0)
             self._pos_x = 0.0
             self._pos_y = 0.0
@@ -125,10 +157,10 @@ class DeviceService:
     def set_tool(self, action: str) -> None:
         """Lower or raise the active tool carriage.
 
-        T1 = pen carriage. T2 = blade carriage.
-        IMPORTANT: T2 auto-lowers the blade internally; sending an additional
-        G01Z after T2 exceeds the soft limit and crashes GRBL. Do NOT add G01Z
-        after T2. T1 only switches the carriage; an explicit G01Z is needed.
+        T1 = blade carriage. T2 = pen carriage.
+        IMPORTANT: T1 auto-lowers the blade internally; sending an additional
+        G01Z after T1 exceeds the soft limit and crashes GRBL. Do NOT add G01Z
+        after T1. T2 only switches the carriage; an explicit G01Z is needed.
         Always raise the current tool before switching carriages.
         """
         with self._lock:
@@ -136,27 +168,38 @@ class DeviceService:
                 raise RuntimeError("Device not connected")
             d = self._device
             if action == "up":
-                d.send_receive_command([b"G01Z-%fF10" % (d.pressure - d.clearance)])
+                # G01Z0 = fully retracted for both T1 and T2.
+                # T1: going from Z=-8.5 to Z=0 = positive direction = sz not set = raises blade.
+                # T2: going from Z=+8.5 to Z=0 = negative direction = sz=+1 = raises pen.
+                self._send_timed(d, [b"G01Z0F10"])
                 d.tool_up = True
             elif action == "pen":
-                if not d.tool_up:
-                    # Safety: raise active tool before switching carriage
-                    d.send_receive_command([b"G01Z-%fF10" % (d.pressure - d.clearance)])
-                    d.tool_up = True
-                d.send_receive_command([b"T1"])
-                d.send_receive_command([b"G01Z-%fF10" % d.pressure])
+                # Pen = T0 (Clamp B, left holder). Blade = T1. T2 does NOT exist
+                # in the CutCutGo firmware — st_select_tool() only handles case 0
+                # and case 1. Sending T2 leaves Z steps/mm undefined and hangs the
+                # firmware (confirmed: white LED, requires power reset).
+                #
+                # Raise Z to 0 first so sys_position = 0 steps before switching.
+                # At 0 steps, both T1 (43.26 steps/mm) and T0 (11.16 steps/mm)
+                # agree: 0 × anything = 0 mm — no position mismatch at the origin.
+                # Then G01Z-pressure lowers the pen, identical to draw_mm_cmd.
+                self._send_timed(d, [b"G01Z0F10"])                   # raise to 0 in T1
+                self._send_timed(d, [b"T0"])                         # switch to pen (Clamp B)
+                self._send_timed(d, [b"G01Z-%fF10" % d.pressure])   # lower pen
                 d.tool_up = False
             elif action == "blade":
-                if not d.tool_up:
-                    # Safety: raise active tool before switching carriage
-                    d.send_receive_command([b"G01Z-%fF10" % (d.pressure - d.clearance)])
-                    d.tool_up = True
-                # T2 auto-lowers blade to cutting depth — no additional G01Z
-                d.send_receive_command([b"T2"])
+                self._send(d, [b"T1"])
+                self._send(d, [b"G01Z-%fF10" % d.pressure])
                 d.tool_up = False
             else:
                 raise ValueError(f"Unknown action: {action!r}")
             self._tool_state = action
+
+    def send_raw(self, cmd: str) -> None:
+        with self._lock:
+            if self._device is None:
+                raise RuntimeError("Device not connected")
+            self._send(self._device, [cmd.encode("ascii")])
 
     def reset_position(self) -> None:
         """Reset tracked (x, y) to (0, 0) without moving the device."""

@@ -109,7 +109,7 @@ app.whenReady().then(async () => {
         label: 'Extras',
         submenu: [
           {
-            label: 'Teach Panel',
+            label: 'Manual Mode',
             accelerator: 'CmdOrCtrl+Shift+T',
             click: () => mainWindow?.webContents.send('teach-panel:toggle'),
           },

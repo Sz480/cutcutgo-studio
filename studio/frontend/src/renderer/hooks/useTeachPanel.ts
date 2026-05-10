@@ -9,6 +9,7 @@ export interface TeachPanelState {
   position: PositionResponse
   stepMm: StepSize
   busy: boolean
+  cmdLog: string[]
   setStepMm: (s: StepSize) => void
   jog: (dx: number, dy: number) => void
   home: () => void
@@ -22,18 +23,21 @@ export function useTeachPanel(deviceConnected: boolean): TeachPanelState {
   const [position, setPosition] = useState<PositionResponse>(INITIAL_POSITION)
   const [stepMm, setStepMm] = useState<StepSize>(1)
   const [busy, setBusy] = useState(false)
+  const [cmdLog, setCmdLog] = useState<string[]>([])
   const busyRef = useRef(false)
 
-  // Poll position every 500 ms while connected
+  // Poll position and command log every 500 ms while connected
   useEffect(() => {
     if (!deviceConnected) {
       setPosition(INITIAL_POSITION)
+      setCmdLog([])
       return
     }
     const id = setInterval(async () => {
       try {
-        const pos = await api.getPosition()
+        const [pos, log] = await Promise.all([api.getPosition(), api.getDeviceLog()])
         setPosition(pos)
+        setCmdLog(log)
       } catch { /* device may not be ready */ }
     }, 500)
     return () => clearInterval(id)
@@ -69,5 +73,5 @@ export function useTeachPanel(deviceConnected: boolean): TeachPanelState {
     withBusy(() => api.resetPosition())
   }, [withBusy])
 
-  return { position, stepMm, busy, setStepMm, jog, home, setTool, resetXY }
+  return { position, stepMm, busy, cmdLog, setStepMm, jog, home, setTool, resetXY }
 }

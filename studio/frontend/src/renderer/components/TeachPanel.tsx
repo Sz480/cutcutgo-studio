@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { STEP_SIZES } from '../hooks/useTeachPanel'
 import type { TeachPanelState, StepSize } from '../hooks/useTeachPanel'
+import { api } from '../api/client'
 
 interface Props {
   state: TeachPanelState
@@ -10,12 +11,31 @@ interface Props {
 }
 
 export function TeachPanel({ state, deviceConnected, jobBusy, onClose }: Props) {
-  const { position, stepMm, busy, setStepMm, jog, home, setTool, resetXY } = state
+  const { position, stepMm, busy, cmdLog, setStepMm, jog, home, setTool, resetXY } = state
   const disabled = !deviceConnected || jobBusy || busy
 
   // Panel drag
-  const [panelPos, setPanelPos] = useState({ x: window.innerWidth - 260, y: 80 })
+  const [panelPos, setPanelPos] = useState({ x: window.innerWidth - 500, y: 80 })
   const dragOrigin = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null)
+
+  // Auto-scroll terminal to bottom
+  const terminalRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (terminalRef.current) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight
+    }
+  }, [cmdLog])
+
+  // Raw command input
+  const [rawCmd, setRawCmd] = useState('')
+  const sendRaw = useCallback(async () => {
+    const cmd = rawCmd.trim()
+    if (!cmd) return
+    try {
+      await api.sendRawCommand(cmd)
+      setRawCmd('')
+    } catch { /* ignore */ }
+  }, [rawCmd])
 
   const handleTitleDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId)
@@ -41,8 +61,8 @@ export function TeachPanel({ state, deviceConnected, jobBusy, onClose }: Props) 
 
   return (
     <div
-      style={{ position: 'fixed', left: panelPos.x, top: panelPos.y, zIndex: 1000, width: 220 }}
-      className="bg-slate-800 border-2 border-blue-500 rounded-xl shadow-2xl text-slate-200 text-xs select-none"
+      style={{ position: 'fixed', left: panelPos.x, top: panelPos.y, zIndex: 1000, width: 480, height: 380 }}
+      className="flex flex-col bg-slate-800 border-2 border-blue-500 rounded-xl shadow-2xl text-slate-200 text-xs select-none"
     >
       {/* Title / drag handle */}
       <div
@@ -60,71 +80,116 @@ export function TeachPanel({ state, deviceConnected, jobBusy, onClose }: Props) 
         >✕</button>
       </div>
 
-      <div className="p-3 space-y-3">
-        {/* Position display */}
-        <div className="flex gap-2">
-          {(['X', 'Y'] as const).map((axis) => (
-            <div key={axis} className="flex-1 bg-slate-900 border border-slate-700 rounded p-2 text-center">
-              <div className="text-slate-500 text-[9px] mb-0.5">{axis}</div>
-              <div className="text-sky-400 font-bold text-sm">
-                {(axis === 'X' ? position.x_mm : position.y_mm).toFixed(1)}
-                <span className="text-slate-500 text-[9px] ml-0.5">mm</span>
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Left: controls */}
+        <div className="p-3 space-y-3 w-[220px] shrink-0">
+          {/* Position display */}
+          <div className="flex gap-2">
+            {(['X', 'Y'] as const).map((axis) => (
+              <div key={axis} className="flex-1 bg-slate-900 border border-slate-700 rounded p-2 text-center">
+                <div className="text-slate-500 text-[9px] mb-0.5">{axis}</div>
+                <div className="text-sky-400 font-bold text-sm">
+                  {(axis === 'X' ? position.x_mm : position.y_mm).toFixed(1)}
+                  <span className="text-slate-500 text-[9px] ml-0.5">mm</span>
+                </div>
               </div>
-            </div>
-          ))}
-          <div className="flex-1 bg-slate-900 border border-slate-700 rounded p-2 text-center">
-            <div className="text-slate-500 text-[9px] mb-0.5">Tool</div>
-            <div className={`font-bold text-[10px] ${toolColor}`}>{toolLabel}</div>
-          </div>
-        </div>
-
-        {/* Step size toggles */}
-        <div>
-          <div className="text-slate-500 text-[9px] uppercase tracking-wider mb-1">Schrittweite (mm)</div>
-          <div className="flex gap-1">
-            {STEP_SIZES.map((s) => (
-              <button
-                key={s}
-                onClick={() => setStepMm(s as StepSize)}
-                className={`flex-1 py-1 rounded text-center transition-colors ${
-                  stepMm === s
-                    ? 'bg-blue-700 border border-blue-400 text-blue-100 font-bold'
-                    : 'bg-slate-900 border border-slate-700 hover:border-slate-500'
-                }`}
-              >
-                {s}
-              </button>
             ))}
+            <div className="flex-1 bg-slate-900 border border-slate-700 rounded p-2 text-center">
+              <div className="text-slate-500 text-[9px] mb-0.5">Tool</div>
+              <div className={`font-bold text-[10px] ${toolColor}`}>{toolLabel}</div>
+            </div>
+          </div>
+
+          {/* Step size toggles */}
+          <div>
+            <div className="text-slate-500 text-[9px] uppercase tracking-wider mb-1">Schrittweite (mm)</div>
+            <div className="flex gap-1">
+              {STEP_SIZES.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setStepMm(s as StepSize)}
+                  className={`flex-1 py-1 rounded text-center transition-colors ${
+                    stepMm === s
+                      ? 'bg-blue-700 border border-blue-400 text-blue-100 font-bold'
+                      : 'bg-slate-900 border border-slate-700 hover:border-slate-500'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* D-Pad */}
+          <div className="grid grid-cols-3 gap-1 w-[102px] mx-auto">
+            <span />
+            <JogBtn label="▲" onClick={() => jog(0, -stepMm)} disabled={disabled} />
+            <span />
+            <JogBtn label="◀" onClick={() => jog(-stepMm, 0)} disabled={disabled} />
+            <button
+              onClick={home}
+              disabled={disabled}
+              className="bg-green-950 border border-green-800 rounded py-1.5 text-center text-green-400 text-sm hover:bg-green-900 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              🏠
+            </button>
+            <JogBtn label="▶" onClick={() => jog(stepMm, 0)} disabled={disabled} />
+            <span />
+            <JogBtn label="▼" onClick={() => jog(0, stepMm)} disabled={disabled} />
+            <span />
+          </div>
+
+          {/* Action buttons */}
+          <div className="grid grid-cols-2 gap-1">
+            <ActionBtn label="⬆ Tool Up"  onClick={() => setTool('up')}    disabled={disabled} cls="border-blue-900   bg-blue-950   text-blue-300" />
+            <ActionBtn label="✒ Pen ↓"    onClick={() => setTool('pen')}   disabled={disabled} cls="border-purple-900 bg-purple-950 text-purple-300" />
+            <ActionBtn label="🔪 Blade ↓" onClick={() => setTool('blade')} disabled={disabled} cls="border-red-900    bg-red-950    text-red-300" />
+            <ActionBtn label="↺ Reset XY" onClick={resetXY}                disabled={busy}     cls="border-slate-700 bg-slate-900  text-slate-400" />
           </div>
         </div>
 
-        {/* D-Pad */}
-        <div className="grid grid-cols-3 gap-1 w-[102px] mx-auto">
-          <span />
-          <JogBtn label="▲" onClick={() => jog(0, -stepMm)} disabled={disabled} />
-          <span />
-          <JogBtn label="◀" onClick={() => jog(-stepMm, 0)} disabled={disabled} />
-          <button
-            onClick={home}
-            disabled={disabled}
-            className="bg-green-950 border border-green-800 rounded py-1.5 text-center text-green-400 text-sm hover:bg-green-900 disabled:opacity-40 disabled:cursor-not-allowed"
+        {/* Right: terminal */}
+        <div className="flex flex-col flex-1 border-l border-slate-700 min-w-0 min-h-0 overflow-hidden">
+          <div className="px-2 py-1 bg-slate-900 border-b border-slate-700 text-[9px] uppercase tracking-wider text-slate-500 flex items-center justify-between">
+            <span>Plotter-Kommandos</span>
+          </div>
+          <div
+            ref={terminalRef}
+            className="flex-1 min-h-0 overflow-y-auto p-2 font-mono text-[10px] text-green-400 bg-black/40"
           >
-            🏠
-          </button>
-          <JogBtn label="▶" onClick={() => jog(stepMm, 0)} disabled={disabled} />
-          <span />
-          <JogBtn label="▼" onClick={() => jog(0, stepMm)} disabled={disabled} />
-          <span />
+            {cmdLog.length === 0
+              ? <span className="text-slate-600">— keine Befehle —</span>
+              : cmdLog.map((line, i) => {
+                  const [ts, ...rest] = line.split('  ')
+                  return (
+                    <div key={i} className="leading-4">
+                      <span className="text-slate-600">{ts}</span>
+                      {'  '}
+                      <span className="text-green-300">{rest.join('  ')}</span>
+                    </div>
+                  )
+                })
+            }
+          </div>
+          {/* Raw command input */}
+          <div className="flex border-t border-slate-700">
+            <input
+              type="text"
+              value={rawCmd}
+              onChange={e => setRawCmd(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && sendRaw()}
+              placeholder="Befehl senden…"
+              className="flex-1 bg-black/60 text-green-300 font-mono text-[10px] px-2 py-1 outline-none placeholder-slate-700 min-w-0"
+            />
+            <button
+              onClick={sendRaw}
+              disabled={!rawCmd.trim() || !deviceConnected}
+              className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-[10px] disabled:opacity-40 rounded-br-xl shrink-0"
+            >
+              ↵
+            </button>
+          </div>
         </div>
-
-        {/* Action buttons */}
-        <div className="grid grid-cols-2 gap-1">
-          <ActionBtn label="⬆ Tool Up"  onClick={() => setTool('up')}    disabled={disabled} cls="border-blue-900   bg-blue-950   text-blue-300" />
-          <ActionBtn label="✒ Pen ↓"    onClick={() => setTool('pen')}   disabled={disabled} cls="border-purple-900 bg-purple-950 text-purple-300" />
-          <ActionBtn label="🔪 Blade ↓" onClick={() => setTool('blade')} disabled={disabled} cls="border-red-900    bg-red-950    text-red-300" />
-          <ActionBtn label="↺ Reset XY" onClick={resetXY}                disabled={busy}     cls="border-slate-700 bg-slate-900  text-slate-400" />
-        </div>
-
       </div>
     </div>
   )

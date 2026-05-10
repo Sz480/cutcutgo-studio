@@ -78,4 +78,13 @@ export const api = {
     const res = await axios.post(`${BASE}/api/device/reset-position`)
     return res.data
   },
+
+  async getDeviceLog(): Promise<string[]> {
+    const res = await axios.get(`${BASE}/api/device/log`)
+    return res.data.entries
+  },
+
+  async sendRawCommand(cmd: string): Promise<void> {
+    await axios.post(`${BASE}/api/device/raw`, { cmd })
+  },
 }

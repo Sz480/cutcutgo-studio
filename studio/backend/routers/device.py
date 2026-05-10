@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 from studio.backend.models import DeviceStatus, JogRequest, ToolRequest, PositionResponse
 from studio.backend.device_service import get_device_service
 
@@ -87,3 +88,23 @@ def device_reset_position() -> dict:
 @router.get("/position", response_model=PositionResponse)
 def device_position() -> PositionResponse:
     return PositionResponse(**get_device_service().get_position())
+
+
+@router.get("/log")
+def device_log() -> dict:
+    return {"entries": get_device_service().get_log()}
+
+
+class RawCommandRequest(BaseModel):
+    cmd: str
+
+@router.post("/raw")
+def device_raw(req: RawCommandRequest) -> dict:
+    svc = get_device_service()
+    if not svc.is_connected():
+        raise HTTPException(status_code=409, detail="Device not connected")
+    try:
+        svc.send_raw(req.cmd)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    return {"sent": req.cmd}
