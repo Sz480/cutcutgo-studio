@@ -26,7 +26,7 @@ export interface CutSettings {
 // Pen (Clamp B, left holder): X=38, Y=44 measured empirically with Manual Mode.
 // Blade (ATS, right holder): X=0, Y=0 — home position is already the cut origin.
 export const TOOL_OFFSETS: Record<'blade' | 'pen', { x: number; y: number }> = {
-  blade: { x: 0,  y: 0  },
+  blade: { x: 0,  y: 44 },
   pen:   { x: 38, y: 44 },
 }
 
