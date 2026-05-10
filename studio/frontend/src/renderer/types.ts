@@ -22,6 +22,14 @@ export interface CutSettings {
   sw_clipping: boolean
 }
 
+// Tool-holder offsets: distance from GRBL home to the top-left corner of the mat.
+// Pen (Clamp B, left holder): measured empirically at X=38, Y=44 mm.
+// Blade (ATS, right holder): X=0 (home is at paper edge), same Y as pen.
+export const TOOL_OFFSETS: Record<'blade' | 'pen', { x: number; y: number }> = {
+  blade: { x: 0,  y: 44 },
+  pen:   { x: 38, y: 44 },
+}
+
 export const DEFAULT_SETTINGS: CutSettings = {
   media: 1,
   tool: 'blade',
@@ -32,8 +40,8 @@ export const DEFAULT_SETTINGS: CutSettings = {
   multipass: 1,
   overcut: 0.5,
   strategy: 'mintravel',
-  x_offset: 0,
-  y_offset: 0,
+  x_offset: TOOL_OFFSETS.blade.x,
+  y_offset: TOOL_OFFSETS.blade.y,
   media_width_mm: 304.8,
   media_height_mm: 609.6,
   sharpen_corners: false,
