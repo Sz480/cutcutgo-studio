@@ -1,5 +1,5 @@
 import type { CutSettings, MediaPreset } from '../types'
-import { MAT_SIZES, TOOL_OFFSETS } from '../types'
+import { MAT_SIZES } from '../types'
 
 interface Props {
   settings: CutSettings
@@ -63,8 +63,7 @@ export function SettingsPanel({ settings, mediaPresets, onChange }: Props) {
           value={settings.tool}
           onChange={e => {
             const tool = e.target.value as 'blade' | 'pen'
-            const off = TOOL_OFFSETS[tool]
-            onChange({ ...settings, tool, x_offset: off.x, y_offset: off.y })
+            onChange({ ...settings, tool, x_offset: 0, y_offset: 0 })
           }}
         >
           <option value="blade">Blade (right holder)</option>

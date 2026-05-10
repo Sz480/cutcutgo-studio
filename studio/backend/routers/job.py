@@ -10,6 +10,13 @@ router = APIRouter()
 
 _cancel_event = threading.Event()
 
+# Physical distance from GRBL home to the top-left corner of the paper/mat.
+# Applied on top of the user's x/y_offset (which is paper-relative, 0 = paper corner).
+_TOOL_HOME_OFFSET_MM: dict[str, tuple[float, float]] = {
+    'blade': (0.0, 44.0),
+    'pen':   (38.0, 44.0),
+}
+
 
 def _run_cut_job(job: CutJob, dry_run: bool) -> dict:
     _cancel_event.clear()
@@ -40,13 +47,15 @@ def _run_cut_job(job: CutJob, dry_run: bool) -> dict:
         sharpencorners=s.sharpen_corners,
     )
 
+    home_x, home_y = _TOOL_HOME_OFFSET_MM.get(s.tool, (0.0, 0.0))
+
     # plot() confirmed parameters from CricutMaker.plot() signature:
     # pathlist, mediawidth, mediaheight, offset, bboxonly, endposition
     bbox = device.plot(
         pathlist=path_tuples,
         mediawidth=s.media_width_mm,
         mediaheight=s.media_height_mm,
-        offset=(s.x_offset, s.y_offset),
+        offset=(s.x_offset + home_x, s.y_offset + home_y),
         bboxonly=dry_run,
         endposition="below",
     )
