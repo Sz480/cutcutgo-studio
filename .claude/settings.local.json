@@ -74,7 +74,22 @@
       "PowerShell(git *)",
       "Bash(Select-Object -Property Name, PSIsContainer)",
       "Bash(Format-Table -AutoSize)",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "Bash(.venv\\\\Scripts\\\\python *)",
+      "Bash(.venv/Scripts/python -m pytest studio/backend/tests/test_device.py -v)",
+      "Bash(.venv/Scripts/pip install *)",
+      "Bash(cmd *)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:virtualabs.github.io)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "PowerShell(Get-ChildItem *)",
+      "Bash(curl -s https://raw.githubusercontent.com/virtualabs/cutcutgo/main/cutcutgo.X/src/grbl/grbl/stepper.c)",
+      "Read(//tmp/**)",
+      "Bash(curl -s https://raw.githubusercontent.com/virtualabs/cutcutgo/main/cutcutgo.X/src/grbl/grbl/config.h)",
+      "Bash(curl -s https://raw.githubusercontent.com/virtualabs/cutcutgo/main/cutcutgo.X/src/grbl/grbl/grbl.h)",
+      "Bash(curl *)",
+      "Bash(Remove-Item *)"
     ]
   }
 }
