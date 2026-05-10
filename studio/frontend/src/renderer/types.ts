@@ -23,10 +23,10 @@ export interface CutSettings {
 }
 
 // Tool-holder offsets: distance from GRBL home to the top-left corner of the mat.
-// Pen (Clamp B, left holder): measured empirically at X=38, Y=44 mm.
-// Blade (ATS, right holder): X=0 (home is at paper edge), same Y as pen.
+// Pen (Clamp B, left holder): X=38, Y=44 measured empirically with Manual Mode.
+// Blade (ATS, right holder): X=0, Y=0 — home position is already the cut origin.
 export const TOOL_OFFSETS: Record<'blade' | 'pen', { x: number; y: number }> = {
-  blade: { x: 0,  y: 44 },
+  blade: { x: 0,  y: 0  },
   pen:   { x: 38, y: 44 },
 }
 
