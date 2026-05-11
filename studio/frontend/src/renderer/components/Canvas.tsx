@@ -108,6 +108,14 @@ export function Canvas({
     setScaleDrag({ startPx: e.clientX, startPy: e.clientY, startScale: userScale })
   }
 
+  const handleWheel = (e: React.WheelEvent<SVGSVGElement>) => {
+    if (!e.ctrlKey && !e.metaKey) return
+    if (!onScaleChange || !hasContent) return
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? -0.05 : 0.05
+    onScaleChange(userScale + delta)
+  }
+
   const handleScalePointerMove = (e: React.PointerEvent<SVGRectElement>) => {
     if (!scaleDrag || !onScaleChange || !bbox) return
     const dx = (e.clientX - scaleDrag.startPx) / scale
@@ -128,6 +136,7 @@ export function Canvas({
         onPointerMove={handlePointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
+        onWheel={handleWheel}
       >
         {/* Grid — fixed to mat */}
         {gridLinesX.map(i => (
