@@ -21,6 +21,7 @@ export default function App() {
   const [svgContent, setSvgContent] = useState<string | null>(null)
   const [parsedPaths, setParsedPaths] = useState<PathList | null>(null)
   const [svgWarning, setSvgWarning] = useState<string | null>(null)
+  const [svgNormOffset, setSvgNormOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const [scale, setScale] = useState<number>(1.0)
   const [showImportPanel, setShowImportPanel] = useState(false)
 
