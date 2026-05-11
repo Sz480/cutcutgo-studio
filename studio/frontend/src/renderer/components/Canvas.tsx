@@ -64,6 +64,10 @@ export function Canvas({
     px: number; py: number; ox: number; oy: number
   } | null>(null)
 
+  const [scaleDrag, setScaleDrag] = useState<{
+    startPx: number; startPy: number; startScale: number
+  } | null>(null)
+
   const hasContent = !!(svgContent || previewPaths)
   const bbox = parsedPaths ? computeBbox(parsedPaths) : null
 
@@ -94,6 +98,22 @@ export function Canvas({
     : hasContent && onOffsetChange
       ? 'grab'
       : 'default'
+
+  const HANDLE_SIZE = 8
+
+  const handleScalePointerDown = (e: React.PointerEvent<SVGRectElement>) => {
+    if (!onScaleChange) return
+    e.stopPropagation()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    setScaleDrag({ startPx: e.clientX, startPy: e.clientY, startScale: userScale })
+  }
+
+  const handleScalePointerMove = (e: React.PointerEvent<SVGRectElement>) => {
+    if (!scaleDrag || !onScaleChange || !bbox) return
+    const dx = (e.clientX - scaleDrag.startPx) / scale
+    const newScale = scaleDrag.startScale + dx / bbox.w
+    onScaleChange(newScale)
+  }
 
   return (
     <div className="flex-1 flex items-center justify-center bg-gray-950 overflow-auto p-4">
@@ -167,6 +187,23 @@ export function Canvas({
               strokeWidth={1.5 / scale}
               strokeDasharray={`${4 / scale} ${4 / scale}`}
               pointerEvents="none"
+            />
+          )}
+          {bbox && hasContent && onScaleChange && (
+            <rect
+              x={(bbox.w * userScale) - (HANDLE_SIZE / scale)}
+              y={(bbox.h * userScale) - (HANDLE_SIZE / scale)}
+              width={HANDLE_SIZE * 2 / scale}
+              height={HANDLE_SIZE * 2 / scale}
+              fill="#6366f1"
+              stroke="#fff"
+              strokeWidth={2 / scale}
+              rx={2 / scale}
+              style={{ cursor: 'se-resize' }}
+              onPointerDown={handleScalePointerDown}
+              onPointerMove={handleScalePointerMove}
+              onPointerUp={() => setScaleDrag(null)}
+              onPointerCancel={() => setScaleDrag(null)}
             />
           )}
         </g>
