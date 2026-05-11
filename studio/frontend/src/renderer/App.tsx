@@ -9,6 +9,7 @@ import { useImport } from './hooks/useImport'
 import { Toolbar } from './components/Toolbar'
 import { Canvas } from './components/Canvas'
 import { SettingsPanel } from './components/SettingsPanel'
+import { ScalePanel } from './components/ScalePanel'
 import { DeviceStatus } from './components/DeviceStatus'
 import { ImportPanel } from './components/ImportPanel'
 import { TeachPanel } from './components/TeachPanel'
@@ -20,6 +21,7 @@ export default function App() {
   const [svgContent, setSvgContent] = useState<string | null>(null)
   const [parsedPaths, setParsedPaths] = useState<PathList | null>(null)
   const [svgWarning, setSvgWarning] = useState<string | null>(null)
+  const [scale, setScale] = useState<number>(1.0)
   const [showImportPanel, setShowImportPanel] = useState(false)
 
   const { status: deviceStatus, loading: deviceLoading, error: deviceError, connect, disconnect } = useDevice()
@@ -78,6 +80,7 @@ export default function App() {
           appHandledTextWarning,
         )
         setParsedPaths(paths)
+        setScale(1.0)
         reset()
       } else if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
         importHook.setFile(file)
@@ -93,6 +96,7 @@ export default function App() {
     if (paths && paths.length > 0) {
       setParsedPaths(paths)
       setSvgContent(null)
+      setScale(1.0)
       reset()
     }
     setShowImportPanel(false)
@@ -106,16 +110,22 @@ export default function App() {
 
   const handlePreview = useCallback(() => {
     if (!parsedPaths) return
-    preview({ paths: parsedPaths, settings })
-  }, [parsedPaths, settings, preview])
+    const scaled = parsedPaths.map(p => p.map(([x, y]) => [x * scale, y * scale] as [number, number]))
+    preview({ paths: scaled, settings })
+  }, [parsedPaths, settings, scale, preview])
 
   const handleSend = useCallback(() => {
     if (!parsedPaths) return
-    send({ paths: parsedPaths, settings })
-  }, [parsedPaths, settings, send])
+    const scaled = parsedPaths.map(p => p.map(([x, y]) => [x * scale, y * scale] as [number, number]))
+    send({ paths: scaled, settings })
+  }, [parsedPaths, settings, scale, send])
 
   const handleOffsetChange = useCallback((x: number, y: number) => {
     setSettings(s => ({ ...s, x_offset: Math.round(x * 10) / 10, y_offset: Math.round(y * 10) / 10 }))
+  }, [])
+
+  const handleScaleChange = useCallback((s: number) => {
+    setScale(Math.max(0.1, Math.min(5.0, Math.round(s * 100) / 100)))
   }, [])
 
   return (
@@ -147,10 +157,15 @@ export default function App() {
         <Canvas
           svgContent={svgContent}
           previewPaths={previewPaths}
+          parsedPaths={parsedPaths}
+          scale={scale}
+          onScaleChange={handleScaleChange}
           mediaWidthMm={settings.media_width_mm}
           mediaHeightMm={settings.media_height_mm}
           xOffsetMm={settings.x_offset}
           yOffsetMm={settings.y_offset}
+          svgNormOffsetX={svgNormOffset.x}
+          svgNormOffsetY={svgNormOffset.y}
           onOffsetChange={handleOffsetChange}
         />
 
@@ -169,6 +184,13 @@ export default function App() {
             settings={settings}
             mediaPresets={mediaPresets}
             onChange={setSettings}
+          />
+          <ScalePanel
+            scale={scale}
+            originalWidthMm={parsedPaths ? Math.max(...parsedPaths.flatMap(p => p.map(pt => pt[0]))) : 0}
+            originalHeightMm={parsedPaths ? Math.max(...parsedPaths.flatMap(p => p.map(pt => pt[1]))) : 0}
+            mediaWidthMm={settings.media_width_mm}
+            onChange={handleScaleChange}
           />
         </div>
       </div>
