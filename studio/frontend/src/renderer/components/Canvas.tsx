@@ -1,19 +1,40 @@
 import { useState } from 'react'
 import type { PathList } from '../types'
 
-function pathsToPolyline(paths: PathList, scale: number): string[] {
+const PX_PER_MM = 96 / 25.4  // ≈ 3.7795
+
+function pathsToPolyline(paths: PathList, mmToPx: number, userS: number): string[] {
   return paths
     .filter(p => p.length >= 2)
-    .map(p => p.map(pt => `${pt[0] * scale},${pt[1] * scale}`).join(' '))
+    .map(p => p.map(pt => `${pt[0] * mmToPx * userS},${pt[1] * mmToPx * userS}`).join(' '))
+}
+
+function computeBbox(paths: PathList): { x: number; y: number; w: number; h: number } | null {
+  if (!paths || paths.length === 0) return null
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  for (const path of paths) {
+    for (const [x, y] of path) {
+      if (x < minX) minX = x
+      if (y < minY) minY = y
+      if (x > maxX) maxX = x
+      if (y > maxY) maxY = y
+    }
+  }
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY }
 }
 
 interface Props {
   svgContent: string | null
   previewPaths: PathList | null
+  parsedPaths: PathList | null
+  scale: number
+  onScaleChange?: (scale: number) => void
   mediaWidthMm: number
   mediaHeightMm: number
   xOffsetMm?: number
   yOffsetMm?: number
+  svgNormOffsetX?: number
+  svgNormOffsetY?: number
   onOffsetChange?: (x: number, y: number) => void
 }
 
@@ -23,10 +44,15 @@ const CUT_COLOUR = '#f87171'
 export function Canvas({
   svgContent,
   previewPaths,
+  parsedPaths,
+  scale: userScale = 1.0,
+  onScaleChange,
   mediaWidthMm,
   mediaHeightMm,
   xOffsetMm = 0,
   yOffsetMm = 0,
+  svgNormOffsetX = 0,
+  svgNormOffsetY = 0,
   onOffsetChange,
 }: Props) {
   const scale = Math.min(800 / mediaWidthMm, 600 / mediaHeightMm)
@@ -39,6 +65,7 @@ export function Canvas({
   } | null>(null)
 
   const hasContent = !!(svgContent || previewPaths)
+  const bbox = parsedPaths ? computeBbox(parsedPaths) : null
 
   const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
     if (!hasContent || !onOffsetChange) return
@@ -107,13 +134,18 @@ export function Canvas({
               <div
                 // @ts-ignore — xmlns needed for foreignObject children
                 xmlns="http://www.w3.org/1999/xhtml"
-                style={{ width: '100%', height: '100%' }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  transformOrigin: '0 0',
+                  transform: `scale(${userScale}) translate(${-svgNormOffsetX * PX_PER_MM}px, ${-svgNormOffsetY * PX_PER_MM}px)`,
+                }}
                 dangerouslySetInnerHTML={{ __html: svgContent }}
               />
             </foreignObject>
           )}
 
-          {previewPaths && pathsToPolyline(previewPaths, scale).map((pts, i) => (
+          {previewPaths && pathsToPolyline(previewPaths, scale, userScale).map((pts, i) => (
             <polyline
               key={i}
               points={pts}
@@ -123,6 +155,20 @@ export function Canvas({
               strokeLinejoin="round"
             />
           ))}
+
+          {bbox && hasContent && (
+            <rect
+              x={0}
+              y={0}
+              width={bbox.w * userScale}
+              height={bbox.h * userScale}
+              fill="none"
+              stroke="#6366f1"
+              strokeWidth={1.5 / scale}
+              strokeDasharray={`${4 / scale} ${4 / scale}`}
+              pointerEvents="none"
+            />
+          )}
         </g>
       </svg>
     </div>
