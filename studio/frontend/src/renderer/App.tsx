@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { DEFAULT_SETTINGS } from './types'
 import type { CutSettings, PathList, MediaPreset } from './types'
 import { api } from './api/client'
@@ -129,6 +129,13 @@ export default function App() {
     setScale(Math.max(0.1, Math.min(5.0, Math.round(s * 100) / 100)))
   }, [])
 
+  const designBounds = useMemo(() => {
+    if (!parsedPaths || parsedPaths.length === 0) return { w: 0, h: 0 }
+    const xs = parsedPaths.flatMap(p => p.map(pt => pt[0]))
+    const ys = parsedPaths.flatMap(p => p.map(pt => pt[1]))
+    return { w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) }
+  }, [parsedPaths])
+
   return (
     <div className="flex flex-col h-screen bg-gray-950 text-white">
       <Toolbar
@@ -188,8 +195,8 @@ export default function App() {
           />
           <ScalePanel
             scale={scale}
-            originalWidthMm={parsedPaths ? Math.max(...parsedPaths.flatMap(p => p.map(pt => pt[0]))) : 0}
-            originalHeightMm={parsedPaths ? Math.max(...parsedPaths.flatMap(p => p.map(pt => pt[1]))) : 0}
+            originalWidthMm={designBounds.w}
+            originalHeightMm={designBounds.h}
             mediaWidthMm={settings.media_width_mm}
             onChange={handleScaleChange}
           />
