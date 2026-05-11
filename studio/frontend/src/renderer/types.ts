@@ -3,6 +3,12 @@ export type Point = [number, number]   // [x_mm, y_mm]
 export type Path = Point[]
 export type PathList = Path[]
 
+export interface ParsedSvgPaths {
+  paths: PathList
+  normOffsetX: number  // mm subtracted during bbox normalization
+  normOffsetY: number
+}
+
 export interface CutSettings {
   media: number           // 1–11
   tool: 'blade' | 'pen'
@@ -35,7 +41,7 @@ export const DEFAULT_SETTINGS: CutSettings = {
   x_offset: 0,
   y_offset: 0,
   media_width_mm: 304.8,
-  media_height_mm: 609.6,
+  media_height_mm: 304.8,
   sharpen_corners: false,
   reverse_toggle: false,
   sw_clipping: true,

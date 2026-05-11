@@ -1,4 +1,4 @@
-import type { PathList } from '../types'
+import type { PathList, ParsedSvgPaths } from '../types'
 
 // px per mm at 96 DPI
 const PX_PER_MM = 96 / 25.4  // ≈ 3.7795
@@ -12,7 +12,7 @@ export function parseSvgToMmPaths(
   smoothness = 0.05,
   onWarning?: (msg: string) => void,
   suppressTextWarning = false,
-): PathList {
+): ParsedSvgPaths {
   const parser = new DOMParser()
   const doc = parser.parseFromString(svgString, 'image/svg+xml')
   const svgEl = doc.documentElement as unknown as SVGSVGElement
@@ -24,12 +24,19 @@ export function parseSvgToMmPaths(
   const result: PathList = []
 
   shapes.forEach((el) => {
+    // Skip elements inside <defs> — they are templates, not rendered content
+    if (el.closest('defs')) return
+
     const pathData = elementToPathData(el as SVGElement)
     if (!pathData) return
 
-    const points = samplePathData(pathData, mmPerUnit, offsetX, offsetY, smoothness)
-    if (points.length >= 2) {
-      result.push(points)
+    const svgSubpaths = samplePathDataToSvgCoords(pathData, smoothness)
+    const transform = getComposedTransform(el)
+    for (const svgPoints of svgSubpaths) {
+      const points = svgCoordsToMm(svgPoints, mmPerUnit, offsetX, offsetY, transform)
+      if (points.length >= 2) {
+        result.push(points)
+      }
     }
   })
 
@@ -63,14 +70,36 @@ export function parseSvgToMmPaths(
       }
       return
     }
-    // offsetX - ux so that (x + ux - offsetX) * mmPerUnit gives correct mm position
-    const points = samplePathData(pathData, mmPerUnit, offsetX - ux, offsetY - uy, smoothness)
-    if (points.length >= 2) result.push(points)
+
+    const svgSubpaths = samplePathDataToSvgCoords(pathData, smoothness)
+
+    // Build combined transform:
+    // 1) referenced element's own transform
+    // 2) <use> x/y as translate
+    // 3) <use> element's transform + ancestor transforms
+    let combined: number[] | null = null
+
+    const refTransform = getComposedTransform(cloned)
+    if (refTransform) combined = [...refTransform]
+
+    const translateMatrix = [1, 0, 0, 1, ux, uy]
+    combined = combined ? multiplyMatrices(translateMatrix, combined) : translateMatrix
+
+    const useComposed = getComposedTransform(useEl)
+    if (useComposed) {
+      combined = multiplyMatrices(useComposed, combined)
+    }
+
+    for (const svgPoints of svgSubpaths) {
+      const points = svgCoordsToMm(svgPoints, mmPerUnit, offsetX, offsetY, combined)
+      if (points.length >= 2) result.push(points)
+    }
   })
 
   // Normalize all paths so the bounding box starts at (0, 0).
   // This ensures the design sits at the mat's upper-left corner when offset = (0,0),
   // preventing negative offsets that would cut outside the mat boundary.
+  let normOffsetX = 0, normOffsetY = 0
   if (result.length > 0) {
     let minX = Infinity, minY = Infinity
     for (const path of result) {
@@ -79,6 +108,8 @@ export function parseSvgToMmPaths(
         if (pt[1] < minY) minY = pt[1]
       }
     }
+    normOffsetX = minX
+    normOffsetY = minY
     if (minX !== 0 || minY !== 0) {
       for (const path of result) {
         for (const pt of path) {
@@ -89,7 +120,7 @@ export function parseSvgToMmPaths(
     }
   }
 
-  return result
+  return { paths: result, normOffsetX, normOffsetY }
 }
 
 function computeTransform(svgEl: SVGSVGElement): {
@@ -178,29 +209,34 @@ function elementToPathData(el: SVGElement): string | null {
   return null
 }
 
-function samplePathData(
+function samplePathDataToSvgCoords(
   d: string,
-  mmPerUnit: number,
-  offsetX: number,
-  offsetY: number,
   smoothness: number
-): Array<[number, number]> {
-  // Flatten path using recursive cubic bezier subdivision
+): Array<Array<[number, number]>> {
   const commands = parseSvgPath(d)
-  const points: Array<[number, number]> = []
+  const subpaths: Array<Array<[number, number]>> = []
+  let current: Array<[number, number]> = []
   let cx = 0, cy = 0
   let startX = 0, startY = 0
+
+  function flush() {
+    if (current.length >= 2) {
+      subpaths.push(current)
+    }
+    current = []
+  }
 
   for (const cmd of commands) {
     switch (cmd.type) {
       case 'M':
+        flush()
         cx = cmd.x!; cy = cmd.y!
         startX = cx; startY = cy
-        points.push(toMm(cx, cy, mmPerUnit, offsetX, offsetY))
+        current.push([cx, cy])
         break
       case 'L':
         cx = cmd.x!; cy = cmd.y!
-        points.push(toMm(cx, cy, mmPerUnit, offsetX, offsetY))
+        current.push([cx, cy])
         break
       case 'C': {
         const pts = subdivideCubic(
@@ -208,23 +244,140 @@ function samplePathData(
           cmd.x1!, cmd.y1!, cmd.x2!, cmd.y2!, cmd.x!, cmd.y!,
           smoothness
         )
-        for (const [px, py] of pts) {
-          points.push(toMm(px, py, mmPerUnit, offsetX, offsetY))
-        }
+        for (const pt of pts) current.push(pt)
         cx = cmd.x!; cy = cmd.y!
         break
       }
       case 'Z':
-        points.push(toMm(startX, startY, mmPerUnit, offsetX, offsetY))
+        current.push([startX, startY])
         break
     }
   }
 
-  return points
+  // Don't forget the last subpath
+  flush()
+
+  return subpaths
 }
 
 function toMm(x: number, y: number, mmPerUnit: number, ox: number, oy: number): [number, number] {
   return [(x - ox) * mmPerUnit, (y - oy) * mmPerUnit]
+}
+
+function svgCoordsToMm(
+  points: Array<[number, number]>,
+  mmPerUnit: number,
+  offsetX: number,
+  offsetY: number,
+  transform?: number[] | null
+): Array<[number, number]> {
+  return points.map(([x, y]) => {
+    if (transform) {
+      const [tx, ty] = applyMatrix(x, y, transform)
+      return toMm(tx, ty, mmPerUnit, offsetX, offsetY)
+    }
+    return toMm(x, y, mmPerUnit, offsetX, offsetY)
+  })
+}
+
+// ---------------------------------------------------------------------------
+// SVG transform parsing — supports matrix, translate, scale, rotate, skewX/Y
+// Returns [a, b, c, d, e, f] for the 2D affine matrix:
+//   [ a  c  e ]
+//   [ b  d  f ]
+//   [ 0  0  1 ]
+// ---------------------------------------------------------------------------
+
+function parseTransform(attr: string): number[] | null {
+  if (!attr || attr === 'none') return null
+
+  let composed: number[] | null = null
+  const re = /(\w+)\s*\(([^)]*)\)/g
+  let m: RegExpExecArray | null
+
+  while ((m = re.exec(attr)) !== null) {
+    const fn = m[1].toLowerCase()
+    const args = m[2].trim().split(/[\s,]+/).filter(Boolean).map(Number)
+    let matrix: number[] | null = null
+
+    switch (fn) {
+      case 'matrix':
+        if (args.length >= 6) matrix = args.slice(0, 6)
+        break
+      case 'translate':
+        matrix = [1, 0, 0, 1, args[0] ?? 0, args[1] ?? 0]
+        break
+      case 'scale':
+        matrix = [args[0] ?? 1, 0, 0, args[1] ?? args[0] ?? 1, 0, 0]
+        break
+      case 'rotate': {
+        const deg = (args[0] ?? 0) * Math.PI / 180
+        const cos = Math.cos(deg), sin = Math.sin(deg)
+        if (args.length >= 3) {
+          // rotate(angle, cx, cy) = translate(cx,cy) * rotate(angle) * translate(-cx,-cy)
+          const cx = args[1], cy = args[2]
+          matrix = [
+            cos, sin,
+            -sin, cos,
+            -cx * cos + cy * sin + cx,
+            -cx * sin - cy * cos + cy,
+          ]
+        } else {
+          matrix = [cos, sin, -sin, cos, 0, 0]
+        }
+        break
+      }
+      case 'skewx': {
+        const t = Math.tan((args[0] ?? 0) * Math.PI / 180)
+        matrix = [1, 0, t, 1, 0, 0]
+        break
+      }
+      case 'skewy': {
+        const t = Math.tan((args[0] ?? 0) * Math.PI / 180)
+        matrix = [1, t, 0, 1, 0, 0]
+        break
+      }
+    }
+
+    if (matrix) {
+      composed = composed ? multiplyMatrices(matrix, composed) : matrix
+    }
+  }
+
+  return composed
+}
+
+function multiplyMatrices(a: number[], b: number[]): number[] {
+  return [
+    a[0] * b[0] + a[2] * b[1],
+    a[1] * b[0] + a[3] * b[1],
+    a[0] * b[2] + a[2] * b[3],
+    a[1] * b[2] + a[3] * b[3],
+    a[0] * b[4] + a[2] * b[5] + a[4],
+    a[1] * b[4] + a[3] * b[5] + a[5],
+  ]
+}
+
+function applyMatrix(x: number, y: number, m: number[]): [number, number] {
+  return [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]]
+}
+
+function getComposedTransform(el: Element): number[] | null {
+  let current: Element | null = el
+  let composed: number[] | null = null
+
+  while (current) {
+    const attr = current.getAttribute('transform')
+    if (attr) {
+      const m = parseTransform(attr)
+      if (m) {
+        composed = composed ? multiplyMatrices(m, composed) : m
+      }
+    }
+    current = current.parentElement
+  }
+
+  return composed
 }
 
 // SVG path command parser — handles all standard commands: M L H V C S Q T A Z

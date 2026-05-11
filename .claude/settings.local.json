@@ -89,7 +89,19 @@
       "Bash(curl -s https://raw.githubusercontent.com/virtualabs/cutcutgo/main/cutcutgo.X/src/grbl/grbl/config.h)",
       "Bash(curl -s https://raw.githubusercontent.com/virtualabs/cutcutgo/main/cutcutgo.X/src/grbl/grbl/grbl.h)",
       "Bash(curl *)",
-      "Bash(Remove-Item *)"
+      "Bash(Remove-Item *)",
+      "Bash(where inkscape *)",
+      "Read(//c/Program Files/Inkscape/bin/**)",
+      "Read(//c/Program Files \\(x86\\)/Inkscape/bin/**)",
+      "Bash(node -e ' *)",
+      "Bash(ls \"C:\\\\\\\\Git\\\\\\\\cutcutgo-studio\\\\\\\\.superpowers\\\\\\\\brainstorm\\\\\\\\\")",
+      "Bash(ls \"C:\\\\\\\\Git\\\\\\\\cutcutgo-studio\\\\\\\\.superpowers\\\\\\\\\")",
+      "Bash(ls \"C:\\\\\\\\Git\\\\\\\\cutcutgo-studio\\\\\\\\.superpowers\\\\\\\\brainstorm\\\\\\\\1050-1777821035\\\\\\\\state\\\\\\\\\")",
+      "Bash(cat \"C:\\\\\\\\Git\\\\\\\\cutcutgo-studio\\\\\\\\.superpowers\\\\\\\\brainstorm\\\\\\\\1050-1777821035\\\\\\\\state\\\\\\\\server-info\")",
+      "Bash(ls \"C:\\\\\\\\Git\\\\\\\\cutcutgo-studio\\\\\\\\.superpowers\\\\\\\\brainstorm\\\\\\\\1586-1778527728\\\\\\\\state\\\\\\\\\")",
+      "Bash(cat \"C:\\\\\\\\Git\\\\\\\\cutcutgo-studio\\\\\\\\.superpowers\\\\\\\\brainstorm\\\\\\\\1586-1778527728\\\\\\\\state\\\\\\\\server-info\")",
+      "Bash(git show *)",
+      "Bash(node *)"
     ]
   }
 }
